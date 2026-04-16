@@ -1,0 +1,64 @@
+{
+  "name": "LIV Tours - Transfers & Tours Crete",
+  "short_name": "LIV Tours",
+  "description": "Αξιόπιστες μεταφορές αεροδρομίου και ιδιωτικές εκδρομές στα Χανιά και την Κρήτη. Σταθερές τιμές, 5★ εξυπηρέτηση.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf9f5",
+  "theme_color": "#1a2f4a",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "el",
+  "categories": ["travel", "transportation"],
+  "icons": [
+    {
+      "src": "/favicon.webp",
+      "sizes": "any",
+      "type": "image/webp"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ζήτα Προσφορά",
+      "short_name": "Quote",
+      "description": "Πάρε άμεσα προσφορά για τη μεταφορά σου",
+      "url": "/#quote-section",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Εκδρομές",
+      "short_name": "Tours",
+      "description": "Δες τις ιδιωτικές εκδρομές στην Κρήτη",
+      "url": "/tours/browse",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Επικοινωνία",
+      "short_name": "Contact",
+      "description": "Επικοινώνησε μαζί μας",
+      "url": "/contact",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

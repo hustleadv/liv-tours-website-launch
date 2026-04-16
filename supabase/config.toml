@@ -1,0 +1,74 @@
+project_id = "gahezqxadpcyesicvetr"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[functions.create-payment]
+verify_jwt = false
+
+[functions.create-tour-deposit]
+verify_jwt = false
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.send-payment-confirmation]
+verify_jwt = false
+
+[functions.send-tour-deposit-confirmation]
+verify_jwt = false
+
+[functions.send-tour-request-email]
+verify_jwt = false
+
+[functions.packing-tips]
+verify_jwt = false
+
+[functions.generate-local-tip]
+verify_jwt = false
+
+[functions.generate-tour-description]
+verify_jwt = false
+
+[functions.generate-tour-fun-fact]
+verify_jwt = false
+
+[functions.prefill-tour-fun-facts]
+verify_jwt = false
+
+[functions.generate-auto-tours]
+verify_jwt = false
+
+[functions.send-tour-price-quote]
+verify_jwt = false
+
+[functions.send-tour-cancellation]
+verify_jwt = false
+
+[functions.elevenlabs-conversation-token]
+verify_jwt = false
+
+[functions.tour-guide-chat]
+verify_jwt = false
+
+[functions.regenerate-tour-descriptions]
+verify_jwt = false
+
+[functions.send-event-request]
+verify_jwt = false
+
+[functions.send-quote-email]
+verify_jwt = false
+
+[functions.send-confirmation-email]
+verify_jwt = false
+
+[functions.send-cancellation-email]
+verify_jwt = false
+
+[functions.generate-sitemap]
+verify_jwt = false
