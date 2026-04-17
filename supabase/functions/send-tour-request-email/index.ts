@@ -180,10 +180,11 @@ const handler = async (req: Request): Promise<Response> => {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-  } catch (error: any) {
-    console.error("[TOUR-REQUEST-EMAIL] Error:", error);
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error("[TOUR-REQUEST-EMAIL] Error:", err);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: err.message }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

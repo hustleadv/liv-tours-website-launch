@@ -63,7 +63,7 @@ const SharedTourBooking = ({ tourId, tourTitle, onClose }: SharedTourBookingProp
   // Calculate next 4 Wednesdays
   const getNextWednesdays = () => {
     const wednesdays = [];
-    let date = new Date();
+    const date = new Date();
     // Start from today
     while (wednesdays.length < 4) {
       if (date.getDay() === 3) { // 3 = Wednesday

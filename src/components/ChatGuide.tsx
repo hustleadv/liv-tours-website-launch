@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, Send, X, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { motion, AnimatePresence } from "framer-motion";
+import { Compass } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -16,16 +19,19 @@ interface ChatGuideProps {
   className?: string;
 }
 
-const getDefaultQuickReplies = (t: any) => [
+import { type TranslationKeys } from "@/i18n";
+
+const getDefaultQuickReplies = (t: TranslationKeys) => [
   t.chat.quickTransferPrices,
   t.chat.quickHowToBook,
   t.chat.quickPopularTours,
   t.chat.quickAirportTransfer,
   t.chat.quickBestBeaches,
+  t.chat.viewFleet,
 ];
 
 // Generate contextual quick replies based on assistant's last message
-const getContextualReplies = (lastMessage: string, t: any): string[] => {
+const getContextualReplies = (lastMessage: string, t: TranslationKeys): string[] => {
   const lowerMsg = lastMessage.toLowerCase();
   
   // PRIORITY 1: When AI asks for clarification about transfer vs tour
@@ -250,7 +256,15 @@ const STORAGE_KEY = "liv-chat-history";
 
 const ChatGuide = ({ className }: ChatGuideProps) => {
   const { t, language } = useLanguage();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewDismissed, setPreviewDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('livy-preview-dismissed') === 'true';
+    }
+    return false;
+  });
   const [messages, setMessages] = useState<Message[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -270,6 +284,16 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
     }
   }, [messages]);
+
+  // Auto-show preview after a delay
+  useEffect(() => {
+    if (!isOpen && messages.length === 0 && !previewDismissed) {
+      const timer = setTimeout(() => setShowPreview(true), 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowPreview(false);
+    }
+  }, [isOpen, messages, previewDismissed]);
 
   // Handle auto-scrolling
   useEffect(() => {
@@ -351,6 +375,32 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
           }
         }
       }
+      
+      // Post-process the final message for navigation tags
+      if (assistantContent.includes('[[GOTO:')) {
+        const match = assistantContent.match(/\[\[GOTO:(.*?)\]\]/);
+        if (match && match[1]) {
+          const path = match[1];
+          // Delay navigation slightly for better UX
+          setTimeout(() => {
+            navigate(path);
+            setIsOpen(false);
+          }, 2000);
+        }
+      }
+
+      // Handle pre-fill tags
+      if (assistantContent.includes('[[PREFILL:')) {
+        const match = assistantContent.match(/\[\[PREFILL:({.*?})\]\]/);
+        if (match && match[1]) {
+          try {
+            const data = JSON.parse(match[1]);
+            window.dispatchEvent(new CustomEvent('livy:prefill', { detail: data }));
+          } catch (e) {
+            console.error("Failed to parse prefill data", e);
+          }
+        }
+      }
     } catch (error) {
       console.error("Chat error:", error);
       setMessages((prev) => [
@@ -371,23 +421,89 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
 
   if (!isOpen) {
     return (
-      <Button
-        onClick={() => setIsOpen(true)}
-        aria-label="Open chat assistant"
-        aria-expanded="false"
-        className={cn(
-          "fixed bottom-24 right-4 sm:bottom-28 sm:right-6 z-50 h-11 w-11 rounded-full shadow-lg",
-          "bg-background/60 backdrop-blur-md text-foreground",
-          "hover:shadow-xl hover:bg-background/80",
-          "transition-all duration-300 hover:scale-110",
-          "border border-border/50",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-          className
-        )}
-        size="icon"
-      >
-        <MessageCircle className="h-5 w-5" aria-hidden="true" />
-      </Button>
+      <div className="fixed bottom-24 right-4 sm:bottom-28 sm:right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+        <AnimatePresence>
+          {showPreview && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="bg-background/95 backdrop-blur-md border border-accent/20 px-4 py-3 rounded-2xl shadow-xl max-w-[200px] pointer-events-auto relative mb-2"
+            >
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPreview(false);
+                  setPreviewDismissed(true);
+                  localStorage.setItem('livy-preview-dismissed', 'true');
+                }}
+                className="absolute -top-1.5 -right-1.5 p-1 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 border border-slate-200 shadow-sm transition-colors"
+                aria-label="Dismiss greeting"
+              >
+                <X className="w-2.5 h-2.5" />
+              </button>
+              <div className="flex gap-2">
+                <div className="bg-accent/10 p-1.5 rounded-full h-fit mt-0.5">
+                  <Compass className="w-3.5 h-3.5 text-accent" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[11px] font-bold text-accent uppercase tracking-wider">{t.chat.title.split('•')[0]}</p>
+                  <p className="text-xs text-foreground/90 leading-snug">
+                    {language === 'gr' ? "Γεια! Χρειάζεστε βοήθεια με την εκδρομή σας;" : "Hi! Need help with your tour or transfer?"}
+                  </p>
+                </div>
+              </div>
+              {/* Triangle pointer */}
+              <div className="absolute -bottom-1.5 right-4 w-3 h-3 bg-background border-r border-b border-accent/20 rotate-45" />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          className="pointer-events-auto"
+        >
+          <Button
+            onClick={() => {
+              setIsOpen(true);
+              setShowPreview(false);
+            }}
+            aria-label="Open chat assistant"
+            className={cn(
+              "h-14 w-14 rounded-full shadow-2xl relative group overflow-hidden",
+              "bg-gradient-to-br from-accent/90 to-accent text-white p-0 flex items-center justify-center",
+              "hover:shadow-accent/40 transition-all duration-500",
+              className
+            )}
+          >
+            {/* Animated background glow */}
+            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            
+            <motion.div
+              animate={{ 
+                rotate: [0, -10, 10, -10, 0],
+                scale: [1, 1.1, 1] 
+              }}
+              transition={{ 
+                duration: 5, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+            >
+              <MessageCircle className="h-7 w-7 relative z-10" />
+            </motion.div>
+
+            {/* Pulsing indicator */}
+            <span className="absolute top-3 right-3 flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-white/50"></span>
+            </span>
+          </Button>
+        </motion.div>
+      </div>
     );
   }
 
@@ -410,35 +526,36 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
       )}
     >
       {/* Header */}
-      <div className="p-4 bg-primary text-primary-foreground shrink-0 border-b border-white/10 relative overflow-hidden">
-        {/* Subtle decorative background element */}
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="p-5 bg-[#0A2540] text-white shrink-0 relative overflow-hidden">
+        {/* Decorative elements for premium feel */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/10 rounded-full -mr-10 -mt-10 blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-blue-500/5 rounded-full -ml-10 -mb-10 blur-xl" />
         
         <div className="flex items-center justify-between relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="h-12 w-12 rounded-full border-2 border-white/20 overflow-hidden bg-white/10">
-                <img 
-                  src="/livy-avatar.png" 
-                  alt="Livy" 
-                  className="h-full w-full object-cover"
-                  onError={(e) => {
-                    // Fallback to Icon if image fails
-                    e.currentTarget.style.display = 'none';
-                    e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
-                    const icon = document.createElement('div');
-                    icon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-message-circle opacity-80"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>';
-                    e.currentTarget.parentElement?.appendChild(icon.firstChild!);
-                  }}
-                />
+          <div className="flex items-center gap-3.5">
+            <div className="relative group">
+              <div className="h-12 w-12 rounded-full border-2 border-white/20 p-0.5 bg-white/5 transition-transform duration-500 group-hover:scale-105">
+                <div className="w-full h-full rounded-full overflow-hidden">
+                  <img 
+                    src="/livy-avatar.png" 
+                    alt="Livy" 
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100";
+                    }}
+                  />
+                </div>
               </div>
-              <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-primary rounded-full" />
+              <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-[#0A2540] rounded-full shadow-lg" />
             </div>
             <div>
-              <div id="chat-title" className="font-bold text-lg leading-tight">{t.chat.title}</div>
-              <div className="flex items-center gap-1.5">
+              <div id="chat-title" className="font-bold text-lg tracking-tight flex items-center gap-2">
+                {t.chat.title.split('•')[0]}
+                <span className="text-accent italic font-serif text-sm">Concierge</span>
+              </div>
+              <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="flex h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-[10px] uppercase tracking-wider font-semibold opacity-80">Online</span>
+                <span className="text-[10px] uppercase tracking-[0.15em] font-black text-white/60">Expert Aide Online</span>
               </div>
             </div>
           </div>
@@ -481,29 +598,49 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
       >
         <div className="space-y-6">
           {messages.length === 0 && (
-            <div className="text-center py-4 bg-muted/30 rounded-2xl border border-border/50 p-6 mx-2 animate-in fade-in zoom-in duration-500">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <MessageCircle className="h-8 w-8 text-primary" />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-8 bg-white/40 backdrop-blur-sm rounded-3xl border border-white/60 p-8 mx-1 shadow-[0_8px_30px_rgb(0,0,0,0.04)]"
+            >
+              <div className="w-16 h-16 rounded-full bg-accent/5 flex items-center justify-center mx-auto mb-6">
+                <Compass className="w-8 h-8 text-accent/60" />
               </div>
-              <p className="font-semibold text-foreground text-base tracking-tight">{t.chat.greeting}</p>
-              <p className="mt-2 mb-6 text-sm text-muted-foreground leading-relaxed px-2">
+              <h3 className="font-black text-xl text-[#0A2540] tracking-tight">{t.chat.greeting}</h3>
+              <p className="mt-2 mb-8 text-sm text-slate-600 leading-relaxed px-4 font-semibold italic">
                 {t.chat.greetingSubtitle}
               </p>
-              <div className="flex flex-wrap gap-2 justify-center">
+              
+              <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
                 {getDefaultQuickReplies(t).map((q) => (
                   <button
                     key={q}
                     onClick={() => {
-                      setInput(q);
-                      setTimeout(() => sendMessage(), 0);
+                      const initialRoutes: Record<string, string> = {
+                        [t.chat.quickTransferPrices]: '/routes',
+                        [t.chat.viewTours]: '/tours',
+                        [t.chat.quickPopularTours]: '/tours',
+                        [t.chat.quickAirportTransfer]: '/transfers',
+                        [t.chat.quickHowToBook]: '/faq',
+                        [t.chat.quickBestBeaches]: '/tours',
+                        [t.chat.viewFleet]: '/fleet',
+                      };
+
+                      if (initialRoutes[q]) {
+                        navigate(initialRoutes[q]);
+                        setIsOpen(false);
+                      } else {
+                        setInput(q);
+                        setTimeout(() => sendMessage(), 0);
+                      }
                     }}
-                    className="px-4 py-2 text-xs bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary rounded-xl transition-all hover:scale-105 active:scale-95 font-medium"
+                    className="px-4 py-3 text-[13px] bg-white hover:bg-accent hover:text-white border border-slate-200 text-slate-800 rounded-2xl transition-all hover:scale-[1.03] active:scale-95 font-bold shadow-sm text-center leading-tight"
                   >
                     {q}
                   </button>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
           
           {messages.map((msg, i) => (
@@ -522,15 +659,19 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
               
               <div
                 className={cn(
-                  "p-4 rounded-2xl text-sm leading-relaxed shadow-sm",
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground font-medium rounded-tr-none"
-                    : "bg-muted text-foreground prose prose-sm prose-p:my-1 prose-ul:my-2 prose-li:my-1 max-w-[85%] rounded-tl-none border border-border/50"
+                  "max-w-[85%] rounded-[1.25rem] px-5 py-3 text-sm shadow-sm transition-all animate-in fade-in slide-in-from-bottom-2",
+                  msg.role === "user" 
+                    ? "bg-accent text-white ml-auto rounded-tr-none font-medium" 
+                    : "bg-white text-foreground/90 mr-auto rounded-tl-none border border-border/10"
                 )}
               >
                 {msg.role === "assistant" ? (
                   <div className="overflow-hidden break-words">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    <ReactMarkdown>
+                      {msg.content
+                        .replace(/\[\[GOTO:.*?\]\]/g, '')
+                        .replace(/\[\[PREFILL:.*?\]\]/g, '')}
+                    </ReactMarkdown>
                   </div>
                 ) : (
                   msg.content
@@ -562,6 +703,25 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
             (() => {
               const contextReplies = getContextualReplies(messages[messages.length - 1].content, t);
               if (contextReplies.length === 0) return null;
+              
+              // Map specific replies to page navigation
+              const quickReplyRoutes: Record<string, string> = {
+                [t.chat.quickTransferPrices]: '/routes',
+                [t.chat.bookTransfer]: '/transfers',
+                [t.chat.viewTours]: '/tours',
+                [t.chat.quickPopularTours]: '/tours',
+                [t.chat.quickAirportTransfer]: '/transfers',
+                [t.chat.quickHowToBook]: '/faq',
+                [t.chat.haveQuestion]: '/faq',
+                [t.chat.bestBeaches]: '/tours',
+                [t.chat.bookTour]: '/tours',
+                [t.chat.transferPrices]: '/routes',
+                [t.chat.vehicleSedan]: '/fleet',
+                [t.chat.vehicleMinivan]: '/fleet',
+                [t.chat.vehicleMinibus]: '/fleet',
+                [t.chat.viewFleet]: '/fleet',
+              };
+
               return (
                 <div className="flex flex-wrap gap-2 mt-4 ml-11">
                   {contextReplies.map((reply) => (
@@ -572,8 +732,15 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
                           window.open("https://wa.me/306944363525", "_blank");
                           return;
                         }
-                        setInput(reply);
-                        setTimeout(() => sendMessage(), 0);
+                        
+                        // Check for navigation
+                        if (quickReplyRoutes[reply]) {
+                          navigate(quickReplyRoutes[reply]);
+                          setIsOpen(false);
+                        } else {
+                          setInput(reply);
+                          setTimeout(() => sendMessage(), 0);
+                        }
                       }}
                       className="px-3.5 py-2 text-xs bg-primary/5 hover:bg-primary/10 border border-primary/20 text-primary rounded-xl transition-all hover:scale-105 active:scale-95 font-medium shadow-sm"
                     >
@@ -588,38 +755,36 @@ const ChatGuide = ({ className }: ChatGuideProps) => {
       </div>
 
       {/* Input */}
-      <form onSubmit={(e) => { e.preventDefault(); sendMessage(); }} className="p-4 bg-muted/30 border-t border-border/50 shrink-0">
-        <div className="flex gap-2">
-          <label htmlFor="chat-input" className="sr-only">{t.chat.placeholder}</label>
-          <div className="relative flex-1 group">
-            <Input
-              id="chat-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={t.chat.placeholder}
-              disabled={isLoading}
-              className="pr-12 bg-background border-border/50 focus-visible:ring-primary h-11 rounded-xl shadow-inner transition-all group-hover:border-primary/30"
-              aria-describedby="chat-input-description"
-            />
-            <Button
-              type="submit"
-              disabled={!input.trim() || isLoading}
-              size="icon"
-              variant="ghost"
-              className="absolute right-1 top-1 h-9 w-9 text-primary hover:bg-primary/10 rounded-lg transition-all disabled:opacity-30"
-              aria-label={isLoading ? "Sending message..." : "Send message"}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
-              ) : (
-                <Send className="h-5 w-5" aria-hidden="true" />
-              )}
-            </Button>
-          </div>
-          <span id="chat-input-description" className="sr-only">Type your message and press Enter or click Send</span>
+      <div className="p-5 border-t border-border/30 bg-white/50 backdrop-blur-md">
+        <div className="relative group">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={t.chat.placeholder}
+            className="pr-12 py-7 rounded-2xl border-border/30 bg-white shadow-inner transition-all group-focus-within:border-accent/40 text-sm italic"
+            disabled={isLoading}
+          />
+          <Button
+            size="icon"
+            onClick={sendMessage}
+            disabled={!input.trim() || isLoading}
+            className={cn(
+              "absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-xl transition-all transform",
+              input.trim() ? "bg-accent text-white scale-100 opacity-100" : "bg-muted text-muted-foreground scale-90 opacity-0 pointer-events-none"
+            )}
+          >
+            {isLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
         </div>
-      </form>
+        <p className="text-[10px] text-center text-muted-foreground mt-3 font-semibold tracking-wider uppercase opacity-40">
+          Powered by HustleLabs
+        </p>
+      </div>
     </div>
   );
 };

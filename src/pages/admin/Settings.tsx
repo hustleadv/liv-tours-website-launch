@@ -33,6 +33,13 @@ const AdminSettings = () => {
     stripe_secret_key: "",
     google_analytics_id: "",
   });
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !isAdmin) {
@@ -98,6 +105,8 @@ const AdminSettings = () => {
         }, { onConflict: 'id' });
 
       if (error) throw error;
+      
+      console.log('Save response error:', error);
 
       toast({
         title: "Επιτυχία",
@@ -147,14 +156,33 @@ ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 -- 3. Drop existing policy if it exists and create a new one
 DROP POLICY IF EXISTS "Admins can do everything on site_settings" ON public.site_settings;
 
+-- Use a direct check instead of the function for more reliability
 CREATE POLICY "Admins can do everything on site_settings" 
 ON public.site_settings 
 FOR ALL 
 TO authenticated 
-USING (public.has_role(auth.uid(), 'admin'))
-WITH CHECK (public.has_role(auth.uid(), 'admin'));
+USING (
+  EXISTS (
+    SELECT 1 FROM public.user_roles 
+    WHERE user_id = auth.uid() 
+    AND role = 'admin'
+  )
+)
+WITH CHECK (
+  EXISTS (
+    SELECT 1 FROM public.user_roles 
+    WHERE user_id = auth.uid() 
+    AND role = 'admin'
+  )
+);
 
--- 4. Initial insert (optional)
+-- 4. Ensure your user ID has admin role (Run this if you get permission errors)
+-- Your Current User ID: ${currentUserId || 'Checking...'}
+INSERT INTO public.user_roles (user_id, role)
+VALUES ('${currentUserId || 'YOUR_USER_ID_HERE'}', 'admin')
+ON CONFLICT (user_id, role) DO NOTHING;
+
+-- 5. Initial insert
 INSERT INTO public.site_settings (id) 
 VALUES (1) 
 ON CONFLICT (id) DO NOTHING;

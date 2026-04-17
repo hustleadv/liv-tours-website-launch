@@ -33,36 +33,61 @@ interface GeocodingResult {
 }
 
 // Cache storage: key = `${lat},${lon}` -> WeatherData
-const weatherCache = new Map<string, WeatherData>();
+const CACHE_KEY = "liv_weather_cache";
+let weatherCache = new Map<string, WeatherData>();
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
 
-// Weather code to icon/description mapping
-export const weatherCodeMap: Record<number, { icon: string; description: string }> = {
-  0: { icon: '☀️', description: 'Clear sky' },
-  1: { icon: '🌤️', description: 'Mainly clear' },
-  2: { icon: '⛅', description: 'Partly cloudy' },
-  3: { icon: '☁️', description: 'Overcast' },
-  45: { icon: '🌫️', description: 'Foggy' },
-  48: { icon: '🌫️', description: 'Depositing rime fog' },
-  51: { icon: '🌧️', description: 'Light drizzle' },
-  53: { icon: '🌧️', description: 'Moderate drizzle' },
-  55: { icon: '🌧️', description: 'Dense drizzle' },
-  61: { icon: '🌧️', description: 'Slight rain' },
-  63: { icon: '🌧️', description: 'Moderate rain' },
-  65: { icon: '🌧️', description: 'Heavy rain' },
-  71: { icon: '🌨️', description: 'Slight snow' },
-  73: { icon: '🌨️', description: 'Moderate snow' },
-  75: { icon: '🌨️', description: 'Heavy snow' },
-  80: { icon: '🌦️', description: 'Slight showers' },
-  81: { icon: '🌦️', description: 'Moderate showers' },
-  82: { icon: '🌦️', description: 'Violent showers' },
-  95: { icon: '⛈️', description: 'Thunderstorm' },
-  96: { icon: '⛈️', description: 'Thunderstorm with hail' },
-  99: { icon: '⛈️', description: 'Thunderstorm with heavy hail' },
+// Load from localStorage on init
+if (typeof window !== 'undefined') {
+  try {
+    const saved = localStorage.getItem(CACHE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Filter out stale entries
+      const now = Date.now();
+      const validEntries = Object.entries(parsed).filter(
+        ([_, data]) => now - (data as WeatherData).fetchedAt < CACHE_DURATION
+      );
+      weatherCache = new Map(validEntries as any);
+    }
+  } catch (e) {
+    console.error("Failed to load weather cache", e);
+  }
+}
+
+const saveCache = () => {
+  if (typeof window !== 'undefined') {
+    const obj = Object.fromEntries(weatherCache.entries());
+    localStorage.setItem(CACHE_KEY, JSON.stringify(obj));
+  }
+};
+
+export const weatherCodeMap: Record<number, { description: string; icon: string }> = {
+  0: { description: 'Clear sky', icon: '☀️' },
+  1: { description: 'Mainly clear', icon: '🌤️' },
+  2: { description: 'Partly cloudy', icon: '⛅' },
+  3: { description: 'Overcast', icon: '☁️' },
+  45: { description: 'Foggy', icon: '🌫️' },
+  48: { description: 'Depositing rime fog', icon: '🌫️' },
+  51: { description: 'Light drizzle', icon: '🌦️' },
+  53: { description: 'Moderate drizzle', icon: '🌦️' },
+  55: { description: 'Dense drizzle', icon: '🌦️' },
+  61: { description: 'Slight rain', icon: '🌧️' },
+  63: { description: 'Moderate rain', icon: '🌧️' },
+  65: { description: 'Heavy rain', icon: '🌧️' },
+  71: { description: 'Slight snow fall', icon: '🌨️' },
+  73: { description: 'Moderate snow fall', icon: '🌨️' },
+  75: { description: 'Heavy snow fall', icon: '🌨️' },
+  80: { description: 'Slight rain showers', icon: '🌦️' },
+  81: { description: 'Moderate rain showers', icon: '🌧️' },
+  82: { description: 'Violent rain showers', icon: '⛈️' },
+  95: { description: 'Thunderstorm', icon: '⛈️' },
+  96: { description: 'Thunderstorm with slight hail', icon: '⛈️' },
+  99: { description: 'Thunderstorm with heavy hail', icon: '⛈️' },
 };
 
 export function getWeatherInfo(code: number) {
-  return weatherCodeMap[code] || { icon: '🌡️', description: 'Unknown' };
+  return weatherCodeMap[code] || { description: 'Unknown', icon: '❓' };
 }
 
 /**
@@ -70,6 +95,13 @@ export function getWeatherInfo(code: number) {
  * Prioritizes results in Crete, Greece
  */
 export async function geocodeLocation(name: string): Promise<{ lat: number; lon: number } | null> {
+  // Use a simple local geocoding cache too
+  const GEO_CACHE_KEY = `geo_${name.toLowerCase()}`;
+  if (typeof window !== 'undefined') {
+    const cached = sessionStorage.getItem(GEO_CACHE_KEY);
+    if (cached) return JSON.parse(cached);
+  }
+
   try {
     const candidates = [
       name,
@@ -93,7 +125,11 @@ export async function geocodeLocation(name: string): Promise<{ lat: number; lon:
       const greeceResult = data.results.find((r: GeocodingResult) => r.country === 'Greece');
       const result = creteResult || greeceResult || data.results[0];
 
-      return { lat: result.latitude, lon: result.longitude };
+      const coords = { lat: result.latitude, lon: result.longitude };
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(GEO_CACHE_KEY, JSON.stringify(coords));
+      }
+      return coords;
     }
 
     return null;
@@ -107,7 +143,7 @@ export async function geocodeLocation(name: string): Promise<{ lat: number; lon:
  * Fetch weather forecast for a location
  */
 export async function fetchWeatherForecast(location: WeatherLocation): Promise<WeatherData | null> {
-  trackEvent('weather_fetch_start' as any, { location: location.name });
+  // trackEvent('weather_fetch_start' as any, { location: location.name });
 
   try {
     let lat = location.lat;
@@ -117,8 +153,7 @@ export async function fetchWeatherForecast(location: WeatherLocation): Promise<W
     if (lat === undefined || lon === undefined) {
       const coords = await geocodeLocation(location.name);
       if (!coords) {
-        // Safe fallback: show forecast for Crete (Chania) instead of showing nothing
-        trackEvent('weather_fetch_error' as any, { location: location.name, error: 'geocoding_failed_fallback_to_crete' });
+        // Safe fallback
         lat = 35.5138;
         lon = 24.0180;
       } else {
@@ -132,7 +167,6 @@ export async function fetchWeatherForecast(location: WeatherLocation): Promise<W
     // Check cache
     const cached = weatherCache.get(cacheKey);
     if (cached && Date.now() - cached.fetchedAt < CACHE_DURATION) {
-      trackEvent('weather_fetch_success' as any, { location: location.name, source: 'cache' });
       return cached;
     }
 
@@ -140,10 +174,7 @@ export async function fetchWeatherForecast(location: WeatherLocation): Promise<W
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max,uv_index_max&timezone=Europe/Athens&forecast_days=16`;
 
     const response = await fetch(url);
-    if (!response.ok) {
-      trackEvent('weather_fetch_error' as any, { location: location.name, error: 'api_error' });
-      return null;
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
 
@@ -165,12 +196,11 @@ export async function fetchWeatherForecast(location: WeatherLocation): Promise<W
 
     // Update cache
     weatherCache.set(cacheKey, weatherData);
+    saveCache();
 
-    trackEvent('weather_fetch_success' as any, { location: location.name, source: 'api' });
     return weatherData;
   } catch (error) {
     console.error('Weather fetch error:', error);
-    trackEvent('weather_fetch_error' as any, { location: location.name, error: 'network_error' });
     return null;
   }
 }

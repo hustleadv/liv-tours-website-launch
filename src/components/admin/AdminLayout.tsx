@@ -134,7 +134,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
   };
 
   // Derive breadcrumbs from path
-  const pathParts = location.pathname.split('/').filter(p => p !== '' && p !== 'admin');
+  const pathParts = location.pathname.split('/').filter(p => p !== '' && p !== 'livy-hq');
   
   return (
     <div className="flex h-screen bg-[#f8fafc] overflow-hidden">
@@ -146,7 +146,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
       {/* Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden relative">
         {/* Top Header */}
-        <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-6 z-40 shadow-sm shadow-slate-100/50">
+        <header className="h-16 lg:h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 lg:px-6 z-40 shadow-sm shadow-slate-100/50">
           <div className="flex items-center gap-4">
             {/* Mobile Menu Toggle */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -160,9 +160,8 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
               </SheetContent>
             </Sheet>
 
-            {/* Breadcrumbs (Desktop) */}
             <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-slate-400">
-              <span className="hover:text-emerald-500 cursor-pointer transition-colors" onClick={() => navigate('/admin')}>Admin</span>
+              <span className="hover:text-emerald-500 cursor-pointer transition-colors" onClick={() => navigate('/livy-hq')}>Admin</span>
               {pathParts.map((part, index) => (
                 <div key={part} className="flex items-center gap-2">
                   <ChevronRight className="w-3 h-3" />
@@ -195,7 +194,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
               className="hidden sm:inline-flex items-center gap-2 h-11 px-4 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 border border-slate-200 bg-white hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-all shadow-sm"
             >
               <Compass className="w-4 h-4" />
-              <span className="hidden md:inline">Ιστοσελίδα</span>
+              <span className="hidden md:inline">ΙΣΤΟΣΕΛΙΔΑ</span>
             </a>
 
             {/* Notifications Bell */}
@@ -219,7 +218,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
                   {/* Header */}
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-50">
                     <div>
-                      <p className="text-xs font-black text-slate-900 uppercase tracking-wider">Ειδοποιήσεις</p>
+                      <p className="text-xs font-black text-slate-900 uppercase tracking-wider">ΕΙΔΟΠΟΙΗΣΕΙΣ</p>
                       <p className="text-[10px] text-slate-400 font-medium">Εκκρεμείς κρατήσεις & αιτήματα</p>
                     </div>
                     <button onClick={() => setShowNotifications(false)} className="w-7 h-7 rounded-full hover:bg-slate-100 flex items-center justify-center transition-colors">
@@ -241,7 +240,7 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
                           key={notif.id}
                           onClick={() => {
                             setShowNotifications(false);
-                            navigate('/admin', { 
+                            navigate('/livy-hq', { 
                               state: { tab: notif.type === 'booking' ? 'pending' : 'tours' } 
                             });
                           }}
@@ -275,10 +274,10 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
                   {notifications.length > 0 && (
                     <div className="border-t border-slate-50 p-2">
                       <button
-                        onClick={() => { setShowNotifications(false); navigate('/admin', { state: { tab: 'pending' } }); }}
+                        onClick={() => { setShowNotifications(false); navigate('/livy-hq', { state: { tab: 'pending' } }); }}
                         className="w-full py-2 text-[10px] font-black uppercase tracking-wider text-emerald-600 hover:bg-emerald-50 rounded-xl transition-colors"
                       >
-                        Δες όλες τις εκκρεμείς →
+                        ΔΕΣ ΟΛΕΣ ΤΙΣ ΕΚΚΡΕΜΕΙΣ →
                       </button>
                     </div>
                   )}
@@ -289,10 +288,9 @@ const AdminLayout = ({ children, title, subtitle, actions }: AdminLayoutProps) =
             <div className="h-8 w-px bg-slate-100 hidden sm:block" />
             
             <div className="flex items-center gap-2 p-1 bg-slate-50 border border-slate-100 rounded-xl cursor-pointer hover:bg-slate-100 transition-all group">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-xs font-bold text-white shadow-lg shadow-emerald-500/20 group-hover:scale-110 transition-transform">
-                L
+              <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-xs font-black text-white shadow-lg transition-transform group-hover:scale-105 active:scale-95">
+                AD
               </div>
-              <span className="text-sm font-bold text-slate-700 hidden sm:block pr-2">LIV Admin</span>
             </div>
           </div>
         </header>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { getFeaturedRoutes, RouteData } from '@/data/routes';
 
@@ -8,100 +8,58 @@ interface RouteWithLivePrice extends RouteData {
 }
 
 export function useFeaturedRoutePrices() {
-  const [routes, setRoutes] = useState<RouteWithLivePrice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPrices = async () => {
-      const featuredRoutes = getFeaturedRoutes();
+  const featuredRoutes = getFeaturedRoutes();
+  
+  const { data, isLoading } = useQuery({
+    queryKey: ['featured-route-prices'],
+    queryFn: async () => {
+      // Map pickup zones
+      const pickupZones = featuredRoutes
+        .map(r => mapToPickupZone(r.from))
+        .filter(Boolean) as string[];
       
-      // Initialize routes with loading state
-      setRoutes(featuredRoutes.map(route => ({
-        ...route,
-        livePrice: null,
-        isLoadingPrice: true
-      })));
+      const dropoffNames = featuredRoutes.map(r => r.to);
 
-      // Fetch prices from database for each route
-      const routesWithPrices = await Promise.all(
-        featuredRoutes.map(async (route) => {
-          try {
-            // Map route pickup to database pickup_zone
-            const pickupZone = mapToPickupZone(route.from);
-            const dropoffName = route.to;
+      // Fetch all prices in ONE query
+      const { data: prices, error } = await supabase
+        .from('fixed_prices')
+        .select('fixed_price_eur, pickup_zone, dropoff_name')
+        .in('pickup_zone', pickupZones)
+        .in('dropoff_name', dropoffNames)
+        .eq('passengers_min', 1)
+        .eq('passengers_max', 4);
 
-            if (!pickupZone) {
-              return {
-                ...route,
-                livePrice: route.fixedPriceFrom || null,
-                isLoadingPrice: false
-              };
-            }
+      if (error) {
+        console.error("Error fetching featured prices:", error);
+        return featuredRoutes.map(route => ({
+          ...route,
+          livePrice: route.fixedPriceFrom || null,
+          isLoadingPrice: false
+        }));
+      }
 
-            // Query for the lowest price (sedan/1-4 passengers)
-            const { data, error } = await supabase
-              .from('fixed_prices')
-              .select('fixed_price_eur')
-              .ilike('pickup_zone', `%${pickupZone}%`)
-              .ilike('dropoff_name', `%${dropoffName}%`)
-              .eq('passengers_min', 1)
-              .eq('passengers_max', 4)
-              .limit(1)
-              .maybeSingle();
+      // Map prices back to routes
+      return featuredRoutes.map(route => {
+        const pickupZone = mapToPickupZone(route.from);
+        const match = prices?.find(p => 
+          p.pickup_zone === pickupZone && 
+          p.dropoff_name === route.to
+        );
+        
+        return {
+          ...route,
+          livePrice: match ? match.fixed_price_eur : (route.fixedPriceFrom || null),
+          isLoadingPrice: false
+        };
+      });
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  });
 
-            if (error || !data) {
-              // Fallback to static price
-              return {
-                ...route,
-                livePrice: route.fixedPriceFrom || null,
-                isLoadingPrice: false
-              };
-            }
-
-            return {
-              ...route,
-              livePrice: data.fixed_price_eur,
-              isLoadingPrice: false
-            };
-          } catch {
-            return {
-              ...route,
-              livePrice: route.fixedPriceFrom || null,
-              isLoadingPrice: false
-            };
-          }
-        })
-      );
-
-      setRoutes(routesWithPrices);
-      setIsLoading(false);
-    };
-
-    fetchPrices();
-
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('featured-route-prices')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'fixed_prices'
-        },
-        () => {
-          // Refetch prices on any change
-          fetchPrices();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
-
-  return { routes, isLoading };
+  return { 
+    routes: data || featuredRoutes.map(r => ({ ...r, livePrice: r.fixedPriceFrom || null, isLoadingPrice: true })), 
+    isLoading 
+  };
 }
 
 // Map route location names to database pickup zones

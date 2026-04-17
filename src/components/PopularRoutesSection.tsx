@@ -33,7 +33,7 @@ const PopularRoutesSection = forwardRef<HTMLElement, PopularRoutesSectionProps>(
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Popular Routes</span>
             </motion.div>
             
-            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+            <h2 className="text-4xl md:text-5xl lg:text-5xl xl:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
               Chania’s Most <span className="block text-accent italic font-serif mt-2 underline decoration-accent/20 underline-offset-8">Requested Transfers</span>
             </h2>
             
@@ -53,7 +53,7 @@ const PopularRoutesSection = forwardRef<HTMLElement, PopularRoutesSectionProps>(
         </div>
 
         {/* Routes Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-8">
           {featuredRoutes.map((route) => (
             <PopularRouteCard 
               key={route.id} 

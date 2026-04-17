@@ -28,7 +28,7 @@ const LazyImage = ({
           observer.disconnect();
         }
       },
-      { rootMargin: "50px", threshold: 0.1 }
+      { rootMargin: "200px", threshold: 0.01 }
     );
 
     if (imgRef.current) {

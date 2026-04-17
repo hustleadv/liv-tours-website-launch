@@ -203,7 +203,7 @@ const ToursBrowse = ({ tourType }: { tourType?: 'private' | 'shared' }) => {
   const [showFilters, setShowFilters] = useState(false);
 
   const filteredTours = useMemo(() => {
-    let result = tours.filter(tour => {
+    const result = tours.filter(tour => {
       const matchesSearch = !search || 
         tour.title.toLowerCase().includes(search.toLowerCase()) ||
         tour.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase())) ||

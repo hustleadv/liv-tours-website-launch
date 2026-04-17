@@ -159,17 +159,17 @@ interface EditFormData {
 const getStatusBadge = (status: string, priceConfirmedAt: string | null, priceSentAt: string | null) => {
   if (priceConfirmedAt) {
     return (
-      <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-sm">
+      <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-sm uppercase">
         <CheckCircle2 className="w-3 h-3 mr-1" />
-        Επιβεβαιωμένη
+        ΕΠΙΒΕΒΑΙΩΜΕΝΗ
       </Badge>
     );
   }
   if (priceSentAt) {
     return (
-      <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-sm animate-pulse">
+      <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-sm animate-pulse uppercase">
         <Clock className="w-3 h-3 mr-1" />
-        Αναμονή
+        ΑΝΑΜΟΝΗ
       </Badge>
     );
   }
@@ -178,42 +178,42 @@ const getStatusBadge = (status: string, priceConfirmedAt: string | null, priceSe
       return (
         <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0 shadow-sm">
           <Sparkles className="w-3 h-3 mr-1" />
-          Νέο
+          ΝΕΟ
         </Badge>
       );
     case "price_inquiry":
       return (
         <Badge className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-0 shadow-sm animate-pulse">
           <Euro className="w-3 h-3 mr-1" />
-          Αίτημα Τιμής
+          ΑΙΤΗΜΑ ΤΙΜΗΣ
         </Badge>
       );
     case "awaiting_confirmation":
       return (
         <Badge className="bg-gradient-to-r from-amber-400 to-orange-500 text-white border-0 shadow-sm">
           <Clock className="w-3 h-3 mr-1" />
-          Αναμονή
+          ΑΝΑΜΟΝΗ
         </Badge>
       );
     case "price_confirmed":
       return (
         <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-sm">
           <CheckCircle2 className="w-3 h-3 mr-1" />
-          Επιβεβαιωμένη
+          ΕΠΙΒΕΒΑΙΩΜΕΝΗ
         </Badge>
       );
     case "confirmed":
       return (
         <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-sm">
           <CheckCircle2 className="w-3 h-3 mr-1" />
-          Ολοκληρωμένο
+          ΟΛΟΚΛΗΡΩΜΕΝΟ
         </Badge>
       );
     case "cancelled":
       return (
         <Badge className="bg-gradient-to-r from-red-500 to-rose-600 text-white border-0 shadow-sm">
           <Ban className="w-3 h-3 mr-1" />
-          Ακυρωμένο
+          ΑΚΥΡΩΜΕΝΟ
         </Badge>
       );
     default:

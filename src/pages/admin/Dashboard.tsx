@@ -56,7 +56,6 @@ import { el } from "date-fns/locale";
 import { RevenueStats } from "@/components/admin/RevenueStats";
 import { TourRequestsAdmin } from "@/components/admin/TourRequestsAdmin";
 import { UsersManagement } from "@/components/admin/UsersManagement";
-import { SettingsManagement } from "@/components/admin/SettingsManagement";
 import { BookingsCalendar } from "@/components/admin/BookingsCalendar";
 import { SharedToursManagement } from "@/components/admin/SharedToursManagement";
 import { AdminGuide } from "@/components/admin/AdminGuide";
@@ -112,10 +111,10 @@ const AdminDashboard = () => {
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'history' | 'shared-tours' | 'tours' | 'stats' | 'users' | 'settings' | 'guide'>('stats');
+  const [activeTab, setActiveTab] = useState<'pending' | 'confirmed' | 'history' | 'shared-tours' | 'tours' | 'stats' | 'users' | 'guide'>('stats');
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  const handleTabChange = (tab: 'pending' | 'confirmed' | 'history' | 'shared-tours' | 'tours' | 'stats' | 'users' | 'settings' | 'guide') => {
+  const handleTabChange = (tab: 'pending' | 'confirmed' | 'history' | 'shared-tours' | 'tours' | 'stats' | 'users' | 'guide') => {
     setActiveTab(tab);
     if (tab === 'pending') setFilter('pending');
     else if (tab === 'confirmed' || tab === 'history' || tab === 'shared-tours') setFilter('confirmed');
@@ -152,7 +151,7 @@ const AdminDashboard = () => {
   useEffect(() => {
     const checkAdminAndFetch = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { navigate('/admin/auth'); return; }
+      if (!session) { navigate('/livy-hq/auth'); return; }
       const { data: roleData } = await supabase.from('user_roles').select('role').eq('user_id', session.user.id).eq('role', 'admin').maybeSingle();
       if (!roleData) { navigate('/'); return; }
       setIsAdmin(true);
@@ -327,19 +326,17 @@ const AdminDashboard = () => {
   return (
     <AdminLayout
       title={
-        activeTab === 'stats' ? "Σύνοψη Dashboard" : 
-        activeTab === 'pending' ? "Εκκρεμείς Κρατήσεις" : 
-        activeTab === 'confirmed' ? "Επιβεβαιωμένες" : 
-        activeTab === 'shared-tours' ? "Συμμετοχές" :
-        activeTab === 'tours' ? "Αιτήματα Εκδρομών" : 
-        activeTab === 'users' ? "Διαχείριση Χρηστών" : 
-        activeTab === 'settings' ? "Ρυθμίσεις Συστήματος" : 
-        activeTab === 'guide' ? "Οδηγός Χρήσης" :
-        "Ιστορικό Κρατήσεων"
+        activeTab === 'stats' ? "ΣΥΝΟΨΗ DASHBOARD" : 
+        activeTab === 'pending' ? "ΕΚΚΡΕΜΕΙΣ ΚΡΑΤΗΣΕΙΣ" : 
+        activeTab === 'confirmed' ? "ΕΠΙΒΕΒΑΙΩΜΕΝΕΣ" : 
+        activeTab === 'shared-tours' ? "ΣΥΜΜΕΤΟΧΕΣ" :
+        activeTab === 'tours' ? "ΑΙΤΗΜΑΤΑ ΕΚΔΡΟΜΩΝ" : 
+        activeTab === 'users' ? "ΔΙΑΧΕΙΡΙΣΗ ΧΡΗΣΤΩΝ" : 
+        activeTab === 'guide' ? "ΟΔΗΓΟΣ ΧΡΗΣΗΣ" :
+        "ΙΣΤΟΡΙΚΟ ΚΡΑΤΗΣΕΩΝ"
       }
       subtitle={
         activeTab === 'stats' ? "Δείτε τα έσοδα και τις επιδόσεις." : 
-        activeTab === 'settings' ? "Διαμόρφωση κλειδιών και παραμέτρων." :
         activeTab === 'users' ? "Διαχείριση πρόσβασης και ρόλων." :
         activeTab === 'guide' ? "Μάθετε πώς να χρησιμοποιείτε το σύστημα." :
         "Διαχειριστείτε τις κινήσεις της ημέρας."
@@ -375,7 +372,7 @@ const AdminDashboard = () => {
                   activeTab === tab ? "bg-slate-900 text-white shadow-lg" : "text-slate-400 hover:text-slate-600"
                 )}
               >
-                {tab === 'confirmed' ? 'Επιβεβ.' : tab === 'pending' ? 'Αναμονή' : tab === 'shared-tours' ? 'Συμμετοχές' : tab === 'tours' ? 'Αιτήματα' : 'Ιστορικό'}
+                {tab === 'confirmed' ? 'ΕΠΙΒΕΒ.' : tab === 'pending' ? 'ΑΝΑΜΟΝΗ' : tab === 'shared-tours' ? 'ΣΥΜΜΕΤΟΧΕΣ' : tab === 'tours' ? 'ΑΙΤΗΜΑΤΑ' : 'ΙΣΤΟΡΙΚΟ'}
                 {tab === 'pending' && pendingCount > 0 && (
                   <span className="ml-1.5 bg-amber-500 text-white px-1.5 py-0.5 rounded-full text-[9px] font-bold">{pendingCount}</span>
                 )}
@@ -405,8 +402,6 @@ const AdminDashboard = () => {
         <TourRequestsAdmin requests={tourRequests} onRefresh={fetchTourRequests} />
       ) : activeTab === 'users' ? (
         <UsersManagement />
-      ) : activeTab === 'settings' ? (
-        <SettingsManagement />
       ) : activeTab === 'guide' ? (
         <AdminGuide onNavigate={handleTabChange} />
       ) : (
@@ -434,7 +429,7 @@ const AdminDashboard = () => {
                             booking.status === 'pending' ? "bg-amber-50 text-amber-600 border border-amber-100" : "bg-emerald-50 text-emerald-600 border border-emerald-100"
                           )}>
                             {booking.status === 'pending' ? <Clock className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}
-                            {booking.status === 'pending' ? 'Αναμονή' : 'Επιβεβαιωμένη'}
+                            {booking.status === 'pending' ? 'ΑΝΑΜΟΝΗ' : 'ΕΠΙΒΕΒΑΙΩΜΕΝΗ'}
                           </div>
                           <h4 className="font-black text-slate-900 text-xs sm:text-sm tracking-tight truncate pr-2">{booking.booking_id}</h4>
                         </div>
@@ -453,7 +448,7 @@ const AdminDashboard = () => {
                         )}
                       </div>
                     <div className="text-right shrink-0">
-                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Payment</p>
+                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">PAYMENT</p>
                        <p className="text-sm font-black text-slate-900">€{booking.total_amount || booking.payment_amount || '—'}</p>
                        <div className={cn(
                           "mt-1 text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 rounded-md inline-block",
@@ -473,7 +468,7 @@ const AdminDashboard = () => {
                          <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
                        </div>
                        <div className="min-w-0">
-                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Date & Time</p>
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">DATE & TIME</p>
                          <p className="text-xs sm:text-sm font-black text-slate-800 leading-none truncate">{booking.date} • <span className="text-blue-500">{booking.time}</span></p>
                        </div>
                     </div>
@@ -545,7 +540,7 @@ const AdminDashboard = () => {
 
                     {(booking.pickup_detail || booking.dropoff_detail) && (
                       <div className="bg-blue-50/50 p-3 rounded-2xl border border-blue-100/50">
-                         <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1.5">Route Details</p>
+                         <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest mb-1.5">ROUTE DETAILS</p>
                          <div className="space-y-1">
                             {booking.pickup_detail && (
                                <p className="text-[10px] font-bold text-slate-600 flex items-center gap-1.5 capitalize">
@@ -565,7 +560,7 @@ const AdminDashboard = () => {
                       <div className="bg-amber-50/50 p-3 rounded-2xl border border-amber-100/30">
                          <div className="flex items-center gap-1.5 mb-1 text-amber-600">
                            <History className="w-3 h-3" />
-                           <p className="text-[9px] font-black uppercase tracking-widest">Special Requests</p>
+                           <p className="text-[9px] font-black uppercase tracking-widest">SPECIAL REQUESTS</p>
                          </div>
                          <p className="text-[10px] font-medium text-slate-600 italic">"{booking.customer_notes}"</p>
                       </div>
@@ -652,7 +647,7 @@ const AdminDashboard = () => {
            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setShowCalendar(false)} />
            <div className="relative w-full max-w-6xl h-full bg-white rounded-[40px] overflow-hidden shadow-2xl flex flex-col">
              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Ημερολόγιο</h3>
+                <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">ΗΜΕΡΟΛΟΓΙΟ</h3>
                 <Button variant="ghost" size="icon" onClick={() => setShowCalendar(false)} className="h-12 w-12 rounded-2xl">
                   <X className="w-6 h-6" />
                 </Button>

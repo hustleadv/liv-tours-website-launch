@@ -15,6 +15,7 @@ import {
   Heart,
   Palette,
   Star,
+  X,
   type LucideIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -135,7 +136,7 @@ const Header = () => {
         role="banner"
         aria-label="Main navigation"
         className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+          "fixed top-0 left-0 right-0 z-[60] transition-all duration-500",
           scrolled && !mobileMenuOpen
             ? "bg-background/80 backdrop-blur-xl border-b border-border/50 shadow-sm" 
             : "bg-transparent"
@@ -264,7 +265,7 @@ const Header = () => {
 
             {/* Mobile Menu Button */}
             <button
-              className="lg:hidden p-2.5 rounded-full hover:bg-muted/50 transition-colors focus:outline-none relative z-50 touch-manipulation"
+              className="lg:hidden p-2.5 rounded-full hover:bg-muted/50 transition-colors focus:outline-none relative z-[70] touch-manipulation"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={mobileMenuOpen}
@@ -284,7 +285,7 @@ const Header = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 lg:hidden"
+            className="fixed inset-0 z-[70] lg:hidden"
           >
             {/* Backdrop with extreme blur for premium feel */}
             <motion.div 
@@ -304,8 +305,8 @@ const Header = () => {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="absolute top-0 right-0 bottom-0 w-full md:max-w-md bg-background/50 border-l border-border/20 shadow-2xl overflow-y-auto overscroll-contain flex flex-col"
-              style={{ paddingBottom: 'env(safe-area-inset-bottom, 20px)' }}
+              className="absolute top-0 right-0 bottom-0 w-full md:max-w-md bg-background border-l border-border/20 shadow-2xl overflow-y-auto overscroll-contain flex flex-col"
+              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 20px) + 80px)' }}
             >
               {/* Decorative Mesh Gradient Background */}
               <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
@@ -314,10 +315,32 @@ const Header = () => {
               </div>
 
               {/* Header Spacer - ensuring menu items start after the logo space */}
-              <div className="h-28 shrink-0" />
+              {/* Mobile Menu Logo & Close Area Header Replicated for perfect alignment */}
+              <div className="flex items-center justify-between px-6 h-14 md:h-16 border-b border-border/10 shrink-0">
+                <Link to="/" className="flex items-center" onClick={() => setMobileMenuOpen(false)}>
+                  <span className="flex flex-col font-black leading-none tracking-tight">
+                    <span className="block text-xl text-foreground">
+                      LIV <span className="text-accent italic font-serif underline decoration-accent/20 underline-offset-4">Tours</span>
+                    </span>
+                    <span className="block text-[10px] text-muted-foreground font-semibold tracking-[0.25em] mt-1.5 uppercase">& Transfers</span>
+                  </span>
+                </Link>
+                <button 
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="p-2 -mr-2 rounded-full hover:bg-muted transition-colors"
+                  aria-label="Close menu"
+                >
+                  <X className="w-6 h-6 text-foreground/70" />
+                </button>
+              </div>
+
+              {/* Language Switcher - Clear and accessible */}
+              <div className="relative z-10 px-6 pt-6 pb-6 border-b border-border/10 bg-muted/20">
+                <LanguageSwitcher variant="mobile" />
+              </div>
 
               {/* Navigation Items */}
-              <nav className="relative z-10 px-6 py-6 flex-1" aria-label="Mobile navigation">
+              <nav className="relative z-10 px-4 py-4 flex-1" aria-label="Mobile navigation">
                 <ul className="space-y-2">
                   {navLinks.map((link, index) => {
                     const isDropdown = !!link.children;
@@ -469,12 +492,6 @@ const Header = () => {
                       </Button>
                     </Link>
                     
-                    <div className="space-y-4 pt-4 border-t border-border/20">
-                      {/* Language Switcher - Now more compact */}
-                      <div className="px-0 py-0 border-t-0 mt-0">
-                         <LanguageSwitcher variant="mobile" />
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>

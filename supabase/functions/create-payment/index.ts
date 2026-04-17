@@ -27,25 +27,13 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Try to get Stripe Secret Key from site_settings table
-    let stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    
-    try {
-      const { data: settings } = await supabaseClient
-        .from('site_settings')
-        .select('stripe_secret_key')
-        .maybeSingle();
-      
-      if (settings?.stripe_secret_key) {
-        stripeKey = settings.stripe_secret_key;
-        logStep("Using Stripe key from database settings");
-      }
-    } catch (dbError) {
-      logStep("Could not fetch settings from DB, falling back to ENV", dbError);
+    // Get Stripe Secret Key from Environment Variables
+    const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeKey) {
+      logStep("ERROR: STRIPE_SECRET_KEY is not set in Supabase Secrets");
+      throw new Error("STRIPE_SECRET_KEY is not set");
     }
-
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY is not set (checked ENV and DB)");
-    logStep("Stripe key verified");
+    logStep("Stripe key verified from ENV");
 
     const body = await req.json();
     const {

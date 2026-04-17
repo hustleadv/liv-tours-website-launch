@@ -134,6 +134,46 @@ const QuoteWidget = forwardRef<HTMLDivElement, QuoteWidgetProps>(({ variant = "c
     }
   }, [defaultPickup, defaultDropoff]);
 
+  // Listen for pre-fill events from Livy chat
+  useEffect(() => {
+    const handleLivyPrefill = (event: CustomEvent<any>) => {
+      const { pickup, dropoff, passengers, date: prefillDate, time } = event.detail;
+      
+      setFormData(prev => ({
+        ...prev,
+        pickup: pickup || prev.pickup,
+        dropoff: dropoff || prev.dropoff,
+        passengers: passengers?.toString() || prev.passengers,
+        time: time || prev.time,
+      }));
+      
+      if (prefillDate) {
+        setDate(new Date(prefillDate));
+      }
+
+      toast({
+        title: language === 'gr' ? "Η Livy συμπλήρωσε κάποια στοιχεία!" : "Livy pre-filled some details!",
+        description: language === 'gr' ? "Ελέγξτε τα παρακάτω για να συνεχίσετε." : "Check them below to continue.",
+      });
+    };
+
+    window.addEventListener('livy:prefill' as any, handleLivyPrefill);
+    return () => window.removeEventListener('livy:prefill' as any, handleLivyPrefill);
+  }, [language]);
+
+  // Accessibility: Announce step changes
+  useEffect(() => {
+    const announcer = document.getElementById('a11y-announcer');
+    if (announcer) {
+      const stepLabels: Record<number, string> = {
+        1: language === 'gr' ? 'Βήμα 1: Διαδρομή και ώρα' : 'Step 1: Route and time',
+        2: language === 'gr' ? 'Βήμα 2: Λεπτομέρειες οχήματος και επιβατών' : 'Step 2: Vehicle and passenger details',
+        3: language === 'gr' ? 'Βήμα 3: Στοιχεία επικοινωνίας και επιβεβαίωση' : 'Step 3: Contact details and confirmation',
+      };
+      announcer.textContent = stepLabels[step] || '';
+    }
+  }, [step, language]);
+
   // Handle recent route selection
   const handleRecentRouteSelect = useCallback((pickup: string, dropoff: string) => {
     setFormData(prev => ({ ...prev, pickup, dropoff }));

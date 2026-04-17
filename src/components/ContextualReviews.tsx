@@ -58,10 +58,10 @@ const ContextualReviews = ({
     return (
       <div className="glass-card p-6">
         {/* Rating Summary */}
-        <div className="flex items-center gap-3 mb-4">
+        <div className="flex items-center gap-3 mb-4" aria-label={`Average rating ${stats.averageRating} out of 5 stars from ${stats.totalReviews} reviews`}>
           <div className="flex items-center gap-1">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" />
+              <Star key={i} className="w-4 h-4 text-amber-400 fill-amber-400" aria-hidden="true" />
             ))}
           </div>
           <span className="text-sm font-medium text-primary">
@@ -94,10 +94,10 @@ const ContextualReviews = ({
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
               {/* Rating Summary Chip */}
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-olive/10 dark:bg-olive/20 rounded-full mb-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-olive/10 dark:bg-olive/20 rounded-full mb-3" aria-label={`Rating ${stats.averageRating} out of 5 stars`}>
                 <div className="flex items-center gap-0.5">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-olive fill-olive" />
+                    <Star key={i} className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-olive fill-olive" aria-hidden="true" />
                   ))}
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-olive dark:text-olive-light">
@@ -140,9 +140,9 @@ const ContextualReviews = ({
               </div>
 
               {/* Stars & Rating */}
-              <div className="flex items-center gap-1 mb-6">
+              <div className="flex items-center gap-1 mb-6" aria-label="Rating 5 out of 5 stars">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-3.5 h-3.5 text-accent fill-accent" />
+                  <Star key={i} className="w-3.5 h-3.5 text-accent fill-accent" aria-hidden="true" />
                 ))}
               </div>
               

@@ -45,7 +45,7 @@ const FinalCTABlock = ({
             {badge}
           </motion.div>
           
-          <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-primary mb-8 tracking-tight leading-[1.05]">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-primary mb-8 tracking-tight leading-[1.05]">
             Ready for your <span className="inline text-accent italic font-serif underline decoration-accent/20 underline-offset-8">journey?</span>
           </h2>
           

@@ -14,7 +14,7 @@ import WhyChooseLIV from "@/components/WhyChooseLIV";
 import SavedQuotes from "@/components/SavedQuotes";
 import WeatherAlertBanner from "@/components/WeatherAlertBanner";
 import { useLoyaltyStatus } from "@/components/LoyaltyBadge";
-import heroImage from "@/assets/IMG_7837.jpg";
+const heroImage = "/images/hero-home.webp";
 import fleetSedan from "@/assets/fleet-sedan-new.webp";
 import fleetMinivan from "@/assets/fleet-vclass-exterior.webp";
 import fleetMinibus from "@/assets/minibusmaxi4.jpg";
@@ -334,12 +334,12 @@ const Index = () => {
       )}
 
       {/* ========== HERO SECTION - QUIET LUXURY RELOADED ========== */}
-      <section ref={heroRef} className="relative min-h-[65vh] md:min-h-screen flex items-center justify-center overflow-hidden" aria-label="Welcome to LIV Tours">
+      <section ref={heroRef} className="relative min-h-[70dvh] md:min-h-[85vh] xl:min-h-screen flex items-center justify-center overflow-hidden" aria-label="Welcome to LIV Tours">
         {/* Background Layer with Advanced Cinematic Overlay */}
         <div className="absolute inset-0 md:-top-20 md:-bottom-20 overflow-hidden">
           <img
             src={heroImage}
-            alt=""
+            alt="Private Transfers and Tours Chania Crete - LIV Tours"
             role="presentation"
             className="w-full h-full md:h-[110%] object-cover object-[50%_center] md:object-[center_60%] will-change-transform scale-105"
             style={{ transform: typeof window !== 'undefined' && window.innerWidth > 768 ? `translateY(${parallaxOffset}px)` : 'none' }}
@@ -353,7 +353,7 @@ const Index = () => {
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/40 via-transparent to-slate-950/40 opacity-30" aria-hidden="true" />
         </div>
 
-        <div className="container-wide relative z-10 pt-16 pb-20 md:pt-48 md:pb-40 text-center">
+        <div className="container-wide relative z-10 pt-20 pb-20 md:pt-32 lg:pt-40 xl:pt-48 md:pb-24 lg:pb-32 xl:pb-40 text-center">
           <div className="max-w-5xl mx-auto">
             {/* Sophisticated Trust Badge */}
             <motion.div 
@@ -362,7 +362,6 @@ const Index = () => {
               transition={{ duration: 0.8, ease: "easeOut" }}
               className="inline-flex items-center gap-4 px-6 py-2.5 bg-white/10 backdrop-blur-2xl rounded-full mb-10 border border-white/20 shadow-[0_0_30px_rgba(0,0,0,0.3)]"
             >
-
               <div className="flex items-center gap-1.5" role="img" aria-label="5 star rating">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="w-4 h-4 text-accent fill-accent" aria-hidden="true" />
@@ -386,7 +385,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.8 }}
-              className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black tracking-tight mb-8 text-white leading-[1.1]"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black tracking-tight mb-8 text-white leading-[1.1]"
             >
               Experience Chania in <span className="block text-accent italic font-serif mt-2 md:mt-4 underline decoration-accent/20 underline-offset-8">Absolute Luxury</span>
             </motion.h1>
@@ -406,7 +405,7 @@ const Index = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.6, duration: 1.2, ease: "easeOut" }}
-              className="hidden md:block relative max-w-5xl mx-auto scroll-mt-24 mb-20 group"
+              className="hidden md:block relative max-w-5xl mx-auto scroll-mt-24 mb-12 lg:mb-16 xl:mb-20 group"
             >
               <div className="absolute -inset-1 bg-gradient-to-r from-accent/30 via-white/10 to-accent/30 rounded-[2.5rem] blur-2xl opacity-40 group-hover:opacity-60 transition-opacity" aria-hidden="true" />
               <div className="relative border-4 border-white/5 rounded-[2.5rem] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.6)]">
@@ -513,7 +512,7 @@ const Index = () => {
                 <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Our Expertise</span>
               </motion.div>
               
-            <h2 id="services-heading" className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+            <h2 id="services-heading" className="text-4xl md:text-5xl lg:text-5xl xl:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
                 Elite Chania <span className="block text-accent italic font-serif mt-2 underline decoration-accent/20 underline-offset-8">Travel Services</span>
             </h2>
               
@@ -532,7 +531,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 xl:gap-10">
             {[
               { 
                 title: t.nav.airportTransfers, 
@@ -618,7 +617,7 @@ const Index = () => {
                 <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Weekly Group Excursion</span>
               </motion.div>
               
-              <h2 id="shared-tours-heading" className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+              <h2 id="shared-tours-heading" className="text-4xl md:text-5xl lg:text-5xl xl:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
                 Elafonisi Pink Sand <span className="block text-accent italic font-serif mt-2 underline decoration-accent/20 underline-offset-8">Shared Experience</span>
               </h2>
               
@@ -721,7 +720,7 @@ const Index = () => {
                 <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Mercedes Fleet</span>
               </motion.div>
               
-              <h2 id="fleet-heading" className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+              <h2 id="fleet-heading" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
                 Chania’s Premier <span className="block text-accent italic font-serif mt-2 underline decoration-accent/20 underline-offset-8">Mercedes Fleet</span>
               </h2>
               
@@ -740,7 +739,7 @@ const Index = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 xl:gap-12">
             {[
               { 
                 name: 'Mercedes E-Class', 
@@ -842,7 +841,7 @@ const Index = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-accent">Verified Reviews</span>
             </motion.div>
             
-            <h2 id="reviews-heading" className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tight mb-8 bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
+            <h2 id="reviews-heading" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight mb-8 bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent">
               What Travelers <span className="block text-accent underline decoration-accent/30 underline-offset-8 italic font-serif mt-2">Say About Us</span>
             </h2>
             
@@ -894,7 +893,7 @@ const Index = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-blue-500">Live Weather Insights</span>
             </motion.div>
             
-            <h2 id="weather-heading" className="text-3xl md:text-5xl lg:text-7xl font-black tracking-tight mb-8 bg-gradient-to-r from-primary via-primary/90 to-blue-500 bg-clip-text text-transparent">
+            <h2 id="weather-heading" className="text-3xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight mb-8 bg-gradient-to-r from-primary via-primary/90 to-blue-500 bg-clip-text text-transparent">
               Crete <span className="text-blue-500 italic font-serif mt-2 underline decoration-blue-500/20 underline-offset-8">Weather Forecast</span>
             </h2>
             
@@ -924,7 +923,7 @@ const Index = () => {
               <span className="text-xs font-bold uppercase tracking-[0.2em] text-primary">{t.home.quickAnswers}</span>
             </motion.div>
             
-            <h2 id="faq-heading" className="text-4xl md:text-5xl lg:text-7xl font-black text-primary tracking-tight mb-8 leading-[1.05]">
+            <h2 id="faq-heading" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black text-primary tracking-tight mb-8 leading-[1.05]">
               Common <span className="block text-accent italic font-serif mt-2 underline decoration-accent/20 underline-offset-8">Questions</span>
             </h2>
             

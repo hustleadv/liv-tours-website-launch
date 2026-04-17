@@ -31,7 +31,6 @@ const FAQAccordion = forwardRef<HTMLDivElement, FAQAccordionProps>(({ items, def
         {items.map((item, index) => (
           <div 
             key={index}
-            onMouseEnter={() => setOpenItem(`item-${index}`)}
             className="group relative"
           >
             {/* Active Highlight Glow */}
@@ -49,14 +48,14 @@ const FAQAccordion = forwardRef<HTMLDivElement, FAQAccordionProps>(({ items, def
               `}
             >
               <div className="flex items-center gap-6">
-                <span className={`text-sm font-black transition-colors duration-500 ${openItem === `item-${index}` ? 'text-accent' : 'text-slate-300'}`}>
+                <span className={`text-sm font-black transition-colors duration-500 ${openItem === `item-${index}` ? 'text-accent' : 'text-slate-300'}`} aria-hidden="true">
                   {(index + 1).toString().padStart(2, '0')}
                 </span>
                 <AccordionTrigger className={`text-left font-bold text-xl md:text-2xl text-primary hover:no-underline py-6 transition-all duration-500 ${openItem === `item-${index}` ? 'text-accent gap-4' : 'gap-2'}`}>
                   {item.question}
                 </AccordionTrigger>
               </div>
-              <AccordionContent className="text-muted-foreground pb-10 leading-relaxed text-lg md:text-xl pl-12 lg:pl-16">
+              <AccordionContent className="text-muted-foreground pb-10 leading-relaxed text-lg md:text-xl pl-12 lg:pl-16 font-medium">
                 <div className="max-w-4xl opacity-90">
                   {item.answer}
                 </div>

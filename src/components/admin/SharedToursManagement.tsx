@@ -124,7 +124,7 @@ export const SharedToursManagement = ({ bookings }: SharedToursManagementProps) 
 
                   <div className="flex items-center gap-8">
                     <div className="text-right">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Occupancy</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">OCCUPANCY</p>
                        <div className="flex items-center gap-3">
                           <span className="text-lg font-black text-slate-900">{event.totalPax} / {capacity}</span>
                           <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -201,12 +201,12 @@ export const SharedToursManagement = ({ bookings }: SharedToursManagementProps) 
                            <Users className="w-5 h-5 text-lime" />
                         </div>
                         <div>
-                           <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">Action Required</p>
-                           <p className="text-sm font-bold">Assign Driver for this Event</p>
+                           <p className="text-[10px] font-black text-white/50 uppercase tracking-widest">ACTION REQUIRED</p>
+                           <p className="text-sm font-bold">ASSIGN DRIVER FOR THIS EVENT</p>
                         </div>
                      </div>
                      <button className="px-5 py-2.5 rounded-xl bg-lime text-slate-900 font-black text-xs uppercase hover:bg-white transition-all">
-                        Select Driver
+                        SELECT DRIVER
                      </button>
                   </div>
                 </div>

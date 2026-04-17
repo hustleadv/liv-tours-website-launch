@@ -121,7 +121,8 @@ export const BookingsCalendar = ({ bookings, tourRequests, onClose }: BookingsCa
           </div>
 
           {/* Week Grid */}
-          <div className="grid grid-cols-7 gap-2 mb-4">
+          <div className="overflow-x-auto pb-4 no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+            <div className="grid grid-cols-7 gap-2 min-w-[700px] sm:min-w-0">
             {weekDays.map((day) => {
               const dayBookings = getBookingsForDate(day);
               const dayTours = getToursForDate(day);
@@ -178,6 +179,7 @@ export const BookingsCalendar = ({ bookings, tourRequests, onClose }: BookingsCa
                 </Card>
               );
             })}
+            </div>
           </div>
 
           {/* Selected Day Details */}

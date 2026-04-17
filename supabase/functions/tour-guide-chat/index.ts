@@ -47,13 +47,25 @@ Before responding, consider:
 - **Sun:** The Cretan sun is strong even when it's breezy. Remind them of sunscreen!
 
 **RESPONSE STYLE:**
-- **BE CONCISE:** This is critical. Never provide huge walls of text. Keep paragraphs short (2-3 sentences max).
+- **EXTREME BREVITY:** This is your most important rule. Never provide walls of text. 
+- **The "3-Point Rule":** Never suggest more than 3 items at once. It's better to offer more info later.
+- **Visual Structure:** Use emojis as icons to make your responses look like a premium concierge app, not a textbook.
+- **Teaser Style:** Give a 1-sentence "Why" and move on.
 - **Friendly & Premium:** Conversational but sophisticated.
-- **Use Bold & Lists:** Use bold for key terms and lists for logistics to ensure scannability.
 - **Consistent Language:** Always match the user's language (Greek or English).
-- **Offer Help:** Briefly offer to assist with bookings or quotes.
-- **Micro-Interactions:** When collecting info, ask for only 1-2 items at a time to avoid overwhelming the guest.
-- **HUMAN HANDOFF:** If a user asks for something very specific like a **wedding**, a **large corporate event**, or a **custom luxury package**, or if they seem **frustrated/confused**, tell them: "This sounds like something our human coordinator should handle for the best experience. Would you like to chat with them on WhatsApp?" 
+- **Proactive Navigation:** If we have a specific page that addresses the user's needs, include a navigation tag at the end of your message.
+  - Usage: [[GOTO:/relative-path]]
+- **Smart Pre-filling:** If you identify booking details in the chat (pickup, dropoff, date, pax), include a pre-fill tag. This helps the user by filling out the form for them.
+  - Usage: [[PREFILL:{"pickup":"Location","dropoff":"Destination","passengers":4,"date":"YYYY-MM-DD"}]] (Use only the fields you have).
+- **Micro-Interactions:** Ask only 1 question at the end to keep the user engaged.
+
+**EXAMPLE OF THE STYLE YOU SHOULD USE:**
+"Crete has some magical spots! Here are my top 3 for you:
+🏝️ **Elafonisi:** Famous pink sand & shallow turquoise waters. (Perfect for families)
+🌅 **Falassarna:** Wide sandy shore with the best sunset on the island.
+⛰️ **Seitan Limania:** A hidden blue cove between dramatic cliffs. (Needs a short hike)
+
+Which one sounds like your style? I can give you more details or show you our private tours there!"
 
 **BOOKING & PRICING:**
 - Collect: Event/Tour -> Date -> People -> Pickup -> Name -> Email -> Phone.
@@ -802,7 +814,42 @@ async function fetchTransferPrices() {
   return data || [];
 }
 
-function buildSystemPromptWithData(tours: any[], transferPrices: any[]) {
+async function fetchCurrentWeather() {
+  const CHANIA = { lat: 35.5138, lon: 24.0180 };
+  try {
+    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${CHANIA.lat}&longitude=${CHANIA.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max&timezone=Europe/Athens&forecast_days=3`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      today: {
+        tempMax: data.daily.temperature_2m_max[0],
+        tempMin: data.daily.temperature_2m_min[0],
+        weatherCode: data.daily.weather_code[0],
+        windSpeed: data.daily.wind_speed_10m_max[0]
+      },
+      tomorrow: {
+        tempMax: data.daily.temperature_2m_max[1],
+        tempMin: data.daily.temperature_2m_min[1],
+        weatherCode: data.daily.weather_code[1],
+        windSpeed: data.daily.wind_speed_10m_max[1]
+      }
+    };
+  } catch (e) {
+    console.error("Weather fetch error:", e);
+    return null;
+  }
+}
+
+function getWeatherDescription(code: number) {
+  if (code === 0) return "Clear sky";
+  if (code <= 3) return "Partly cloudy";
+  if (code >= 51 && code <= 67) return "Rainy";
+  if (code >= 80 && code <= 82) return "Showers";
+  if (code >= 95) return "Thunderstorm";
+  return "Cloudy";
+}
+
+function buildSystemPromptWithData(tours: any[], transferPrices: any[], weather: any) {
   const toursList = tours.map(t => 
     `- **${t.title}** (${t.region}, ${t.category}): ${t.short_teaser || 'No description'} | Duration: ${t.duration_hours}h | Difficulty: ${t.difficulty} | Best for: ${t.best_for?.join(', ') || 'Everyone'}${t.price_from_eur ? ` | From €${t.price_from_eur}` : ''}`
   ).join('\n');
@@ -821,7 +868,20 @@ function buildSystemPromptWithData(tours: any[], transferPrices: any[]) {
     .map(r => `- ${r.route}: ${r.prices.join(' | ')}`)
     .join('\n');
 
+  const weatherInfo = weather ? `
+CURRENT WEATHER (CHANIA):
+- Today: ${getWeatherDescription(weather.today.weatherCode)}, Max: ${weather.today.tempMax}°C, Wind: ${weather.today.windSpeed} km/h
+- Tomorrow: ${getWeatherDescription(weather.tomorrow.weatherCode)}, Max: ${weather.tomorrow.tempMax}°C, Wind: ${weather.tomorrow.windSpeed} km/h
+
+WEATHER STRATEGY:
+- If temperature > 30°C: Recommend gorges (Imbros/Samaria) for their shade, or mountain villages. Note that beaches will be very hot.
+- If winds > 25 km/h: Warn about waves at Balos Lagoon and Falassarna. Suggest sheltered beaches or inland tours.
+- If Rainy/Stormy: Recommend Knossos Palace, museums, or wine tasting tours. Avoid hiking.
+- Mention current weather naturally in your greeting if appropriate.` : '';
+
   return `${SYSTEM_PROMPT}
+
+${weatherInfo}
 
 TRANSFER PRICES (Fixed prices per vehicle, NOT per person):
 These are the actual prices from our website. Quote these exact prices when customers ask.
@@ -859,14 +919,15 @@ serve(async (req) => {
 
     console.log("Tour guide chat request:", messages.length, "messages", context ? "with context" : "");
 
-    // Fetch available tours and transfer prices from database
-    const [tours, transferPrices] = await Promise.all([
+    // Fetch available tours, transfer prices, and weather
+    const [tours, transferPrices, weather] = await Promise.all([
       fetchAvailableTours(),
-      fetchTransferPrices()
+      fetchTransferPrices(),
+      fetchCurrentWeather()
     ]);
-    console.log("Loaded", tours.length, "tours and", transferPrices.length, "transfer prices from database");
+    console.log("Loaded", tours.length, "tours,", transferPrices.length, "transfer prices, and weather data");
     
-    let systemPrompt = buildSystemPromptWithData(tours, transferPrices);
+    let systemPrompt = buildSystemPromptWithData(tours, transferPrices, weather);
 
     // Dynamic Context Injection
     const currentDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

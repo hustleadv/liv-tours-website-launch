@@ -674,6 +674,7 @@ export const en = {
     quickPopularTours: "Popular tours",
     quickAirportTransfer: "Airport transfer",
     quickBestBeaches: "Best beaches in Crete",
+    viewFleet: "View Fleet",
     // Group size replies
     groupSmall: "1-2 people",
     groupMedium: "3-4 people",

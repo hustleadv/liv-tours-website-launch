@@ -62,7 +62,6 @@ const TourEdit = lazy(() => import("./pages/admin/TourEdit"));
 const ToursImport = lazy(() => import("./pages/admin/ToursImport"));
 const DriversAdmin = lazy(() => import("./pages/admin/DriversAdmin"));
 const ResetPassword = lazy(() => import("./pages/admin/ResetPassword"));
-const AdminSettings = lazy(() => import("./pages/admin/Settings"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -131,17 +130,16 @@ const App = () => (
                   <Route path="/policies/flightdelays" element={<FlightDelays />} />
                   <Route path="/policies/pricing" element={<Pricing />} />
                   <Route path="/policies/payments" element={<Payments />} />
-                  <Route path="/admin/auth" element={<AdminAuth />} />
-                  <Route path="/admin/reset-password" element={<ResetPassword />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/users" element={<AdminUsers />} />
-                  <Route path="/admin/paste-prices" element={<PastePrices />} />
-                  <Route path="/admin/tours" element={<ToursAdmin />} />
-                  <Route path="/admin/tours/new" element={<TourEdit />} />
-                  <Route path="/admin/tours/:id/edit" element={<TourEdit />} />
-                  <Route path="/admin/tours/import" element={<ToursImport />} />
-                  <Route path="/admin/drivers" element={<DriversAdmin />} />
-                  <Route path="/admin/settings" element={<AdminSettings />} />
+                  <Route path="/livy-hq/auth" element={<AdminAuth />} />
+                  <Route path="/livy-hq/reset-password" element={<ResetPassword />} />
+                  <Route path="/livy-hq" element={<AdminDashboard />} />
+                  <Route path="/livy-hq/users" element={<AdminUsers />} />
+                  <Route path="/livy-hq/paste-prices" element={<PastePrices />} />
+                  <Route path="/livy-hq/tours" element={<ToursAdmin />} />
+                  <Route path="/livy-hq/tours/new" element={<TourEdit />} />
+                  <Route path="/livy-hq/tours/:id/edit" element={<TourEdit />} />
+                  <Route path="/livy-hq/tours/import" element={<ToursImport />} />
+                  <Route path="/livy-hq/drivers" element={<DriversAdmin />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>

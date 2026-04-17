@@ -137,7 +137,7 @@ const WhyChooseLIV = ({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             id="why-choose-heading" 
-            className="text-4xl md:text-5xl lg:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent"
+            className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black tracking-tight mb-8 leading-[1.05] bg-gradient-to-r from-primary via-primary/90 to-accent bg-clip-text text-transparent"
           >
             Why Travelers <span className="block text-accent italic font-serif mt-2 underline decoration-accent/20 underline-offset-8">Choose LIV TOURS</span>
           </motion.h2>
@@ -172,7 +172,7 @@ const WhyChooseLIV = ({
               
               <div className="relative h-full bg-white dark:bg-slate-900 rounded-[2.5rem] p-10 md:p-12 border border-slate-100 dark:border-slate-800 shadow-sm group-hover:shadow-2xl group-hover:shadow-accent/5 group-hover:-translate-y-3 transition-all duration-500 overflow-hidden">
                 {/* Decorative Number */}
-                <span className="absolute top-8 right-10 text-8xl font-black text-slate-50 dark:text-slate-800/50 pointer-events-none group-hover:text-accent/10 transition-colors">
+                <span className="absolute top-8 right-10 text-8xl font-black text-slate-50 dark:text-slate-800/50 pointer-events-none group-hover:text-accent/10 transition-colors" aria-hidden="true">
                   0{index + 1}
                 </span>
 

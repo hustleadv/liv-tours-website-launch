@@ -676,6 +676,7 @@ export const gr: TranslationKeys = {
     quickPopularTours: "Δημοφιλείς εκδρομές",
     quickAirportTransfer: "Transfer αεροδρόμιο",
     quickBestBeaches: "Καλύτερες παραλίες",
+    viewFleet: "Στόλος Οχημάτων",
     // Group size replies
     groupSmall: "1-2 άτομα",
     groupMedium: "3-4 άτομα",

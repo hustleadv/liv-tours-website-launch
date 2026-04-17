@@ -15,6 +15,10 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /livy-hq
+Disallow: /livy-hq/
 
 # Sitemap location
 Sitemap: https://livtours.gr/sitemap.xml

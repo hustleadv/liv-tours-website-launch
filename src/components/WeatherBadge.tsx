@@ -29,8 +29,12 @@ const WeatherBadge = () => {
   const weather = getWeatherInfo(forecast.weatherCode);
 
   return (
-    <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-background/40 backdrop-blur-md rounded-full border border-border/40 hover:bg-background/60 transition-all group shrink-0">
-      <span className="text-lg leading-none" title={weather.description}>{weather.icon}</span>
+    <div 
+      className="hidden md:flex items-center gap-2 px-3 py-1 bg-background/40 backdrop-blur-md rounded-full border border-border/40 hover:bg-background/60 transition-all group shrink-0"
+      aria-label={`Current weather in Chania: ${weather.description}, ${forecast.tempMax} degrees Celsius`}
+      title={`${weather.description} in Chania`}
+    >
+      <span className="text-lg leading-none" aria-hidden="true">{weather.icon}</span>
       <div className="flex flex-col">
         <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none tracking-tighter">Chania</span>
         <span className="text-xs font-bold leading-none">{forecast.tempMax}°C</span>

@@ -89,27 +89,31 @@ const LanguageSwitcher = ({ variant = 'desktop' }: LanguageSwitcherProps) => {
 
   if (variant === 'mobile') {
     return (
-      <div className="flex flex-col gap-3">
-        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] px-1">
-          Language
+      <div className="flex flex-col gap-4">
+        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.25em] px-1 opacity-70">
+          Select Language
         </span>
-        <div className="flex flex-row gap-2.5">
+        <div className="grid grid-cols-2 gap-3">
           {languages.map((lang) => {
             const Flag = flagComponents[lang.code];
+            const isSelected = language === lang.code;
             return (
               <button
                 key={lang.code}
                 onClick={() => setLanguage(lang.code)}
-                className={`flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 border-2 ${
-                  language === lang.code
-                    ? 'border-accent bg-accent/5 shadow-md'
-                    : 'border-border/40 bg-background/50 hover:border-accent/30'
+                className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 border-2 ${
+                  isSelected
+                    ? 'border-accent bg-accent/10 shadow-lg shadow-accent/10'
+                    : 'border-border/30 bg-background/40 hover:border-accent/20'
                 }`}
                 aria-label={`Switch to ${lang.name}`}
               >
-                <div className={language === lang.code ? 'scale-110' : 'opacity-80'}>
+                <div className={`shrink-0 ${isSelected ? 'scale-110' : 'opacity-90'}`}>
                   <Flag />
                 </div>
+                <span className={`text-sm font-bold tracking-tight ${isSelected ? 'text-accent' : 'text-foreground/70'}`}>
+                  {lang.name}
+                </span>
               </button>
             );
           })}
@@ -126,7 +130,7 @@ const LanguageSwitcher = ({ variant = 'desktop' }: LanguageSwitcherProps) => {
             <DropdownMenuTrigger asChild>
               <button 
                 className="flex items-center justify-center p-2 rounded-xl border border-border bg-card hover:bg-muted hover:border-primary/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/30 shadow-sm"
-                aria-label="Change language"
+                aria-label={language === 'gr' ? `Αλλαγή γλώσσας. Τρέχουσα γλώσσα: Ελληνικά` : `Change language. Current language: ${currentLang?.name}`}
                 data-tracking-id="language-switcher"
               >
                 <CurrentFlag />

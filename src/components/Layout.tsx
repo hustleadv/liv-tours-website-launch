@@ -6,6 +6,7 @@ import ScrollToTop from "./ScrollToTop";
 import ChatGuide from "./ChatGuide";
 import { QuoteProvider } from "@/contexts/QuoteContext";
 import { MobileMenuProvider, useMobileMenu } from "@/contexts/MobileMenuContext";
+import MobileBottomCTA from "./MobileBottomCTA";
 
 interface LayoutProps {
   children: ReactNode;
@@ -16,7 +17,7 @@ const LayoutContent = ({ children }: LayoutProps) => {
   const { isMenuOpen } = useMobileMenu();
 
   // Hide ChatGuide on admin pages
-  const isAdminPage = location.pathname.startsWith('/admin');
+  const isAdminPage = location.pathname.startsWith('/livy-hq');
 
   return (
     <div className="min-h-screen flex flex-col overflow-x-hidden">
@@ -30,6 +31,7 @@ const LayoutContent = ({ children }: LayoutProps) => {
       <Header />
       <main id="main-content" className="flex-1 pt-16 md:pt-20" role="main">{children}</main>
       <Footer />
+      {!isAdminPage && !isMenuOpen && <MobileBottomCTA />}
       {/* Hide floating buttons when mobile menu is open */}
       <div className={isMenuOpen ? 'lg:block hidden' : ''}>
         <ScrollToTop />

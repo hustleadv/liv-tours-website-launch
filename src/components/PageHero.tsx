@@ -53,7 +53,7 @@ const PageHero = ({
   return (
     <section
       className={`relative flex items-center overflow-hidden ${
-        compact ? "min-h-[50vh]" : "min-h-[65vh] lg:min-h-[75vh]"
+        compact ? "min-h-[50vh]" : "min-h-[65vh] md:min-h-[70vh] xl:min-h-[75vh]"
       }`}
       aria-label={title}
     >
@@ -66,6 +66,8 @@ const PageHero = ({
             role="presentation"
             className="w-full h-full object-cover object-center"
             loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
         ) : (
           <div className="w-full h-full bg-primary" />
@@ -119,7 +121,7 @@ const PageHero = ({
 
             {/* Title */}
             <h1
-              className={`text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.05] tracking-tight mb-5 ${
+              className={`text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.05] tracking-tight mb-5 ${
                 image ? "text-white" : "text-primary-foreground"
               } ${
                 titleAccent ? "" : "mb-6"

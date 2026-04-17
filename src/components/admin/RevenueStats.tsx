@@ -9,12 +9,44 @@ import {
   Tooltip, 
   ResponsiveContainer,
   CartesianGrid,
-  Legend
 } from "recharts";
-import { TrendingUp, Euro, CreditCard, Banknote, ChevronUp, ChevronDown, Car, Compass, ChevronRight, Clock, UserCheck } from "lucide-react";
-import { format, subDays, startOfMonth, endOfMonth, isWithinInterval, parseISO, startOfDay } from "date-fns";
+import { 
+  Euro, 
+  ChevronUp, 
+  ChevronDown, 
+  Car, 
+  Compass, 
+  ChevronRight, 
+  Clock, 
+  UserCheck,
+  Calendar as CalendarIcon,
+  Filter,
+  CheckCircle2,
+  TrendingUp,
+  CreditCard,
+  Banknote
+} from "lucide-react";
+import { 
+  format, 
+  subDays, 
+  startOfMonth, 
+  endOfMonth, 
+  isWithinInterval, 
+  parseISO, 
+  startOfDay, 
+  endOfDay,
+  eachDayOfInterval,
+  isSameDay
+} from "date-fns";
 import { el } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { 
+  Popover,
+  PopoverContent,
+  PopoverTrigger 
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
 
 interface RevenueBooking {
   id: string;
@@ -25,6 +57,7 @@ interface RevenueBooking {
   created_at: string;
   date: string;
   driver_id: string | null;
+  vehicle_type?: string;
 }
 
 interface TourRequest {
@@ -44,13 +77,22 @@ interface RevenueStatsProps {
 
 export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: endOfMonth(new Date()),
+  });
 
   const stats = useMemo(() => {
-    const now = new Date();
-    const thirtyDaysAgo = subDays(now, 30);
-    const sevenDaysAgo = subDays(now, 7);
-    const monthStart = startOfMonth(now);
-    const monthEnd = endOfMonth(now);
+    const range = dateRange?.from && dateRange?.to ? { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) } : null;
+
+    // Filter helper
+    const isInRange = (isoString: string) => {
+      if (!range) return true;
+      try {
+        const date = parseISO(isoString);
+        return isWithinInterval(date, range);
+      } catch { return false; }
+    };
 
     // === TRANSFERS ===
     const paidTransfers = bookings.filter(b => 
@@ -58,33 +100,12 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
       (b.payment_status === 'paid' || b.payment_status === 'cash_collected' || b.payment_amount)
     );
 
-    const transfersTotal = paidTransfers.reduce((sum, b) => 
-      sum + (b.payment_amount || 0), 0
-    );
-
-    const transfersThisMonth = paidTransfers.filter(b => {
-      try {
-        const paidDate = b.paid_at ? parseISO(b.paid_at) : parseISO(b.created_at);
-        return isWithinInterval(paidDate, { start: monthStart, end: monthEnd });
-      } catch {
-        return false;
-      }
+    const transfersInRange = paidTransfers.filter(b => {
+      const activeDate = b.paid_at || b.created_at;
+      return isInRange(activeDate);
     });
-    const transfersMonthRevenue = transfersThisMonth.reduce((sum, b) => 
-      sum + (b.payment_amount || 0), 0
-    );
 
-    const transfersLast7Days = paidTransfers.filter(b => {
-      try {
-        const paidDate = b.paid_at ? parseISO(b.paid_at) : parseISO(b.created_at);
-        return paidDate >= sevenDaysAgo;
-      } catch {
-        return false;
-      }
-    });
-    const transfers7DaysRevenue = transfersLast7Days.reduce((sum, b) => 
-      sum + (b.payment_amount || 0), 0
-    );
+    const transfersRevenue = transfersInRange.reduce((sum, b) => sum + (b.payment_amount || 0), 0);
 
     // === TOURS ===
     const paidTours = tourRequests.filter(t => 
@@ -92,109 +113,65 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
       (t.payment_status === 'paid' || t.payment_status === 'deposit_paid')
     );
 
-    const toursTotal = paidTours.reduce((sum, t) => 
-      sum + (t.deposit_amount || t.final_price || 0), 0
-    );
-
-    const toursThisMonth = paidTours.filter(t => {
-      try {
-        const paidDate = t.paid_at ? parseISO(t.paid_at) : parseISO(t.created_at);
-        return isWithinInterval(paidDate, { start: monthStart, end: monthEnd });
-      } catch {
-        return false;
-      }
+    const toursInRange = paidTours.filter(t => {
+      const activeDate = t.paid_at || t.created_at;
+      return isInRange(activeDate);
     });
-    const toursMonthRevenue = toursThisMonth.reduce((sum, t) => 
-      sum + (t.deposit_amount || t.final_price || 0), 0
-    );
 
-    const toursLast7Days = paidTours.filter(t => {
-      try {
-        const paidDate = t.paid_at ? parseISO(t.paid_at) : parseISO(t.created_at);
-        return paidDate >= sevenDaysAgo;
-      } catch {
-        return false;
-      }
-    });
-    const tours7DaysRevenue = toursLast7Days.reduce((sum, t) => 
-      sum + (t.deposit_amount || t.final_price || 0), 0
-    );
+    const toursRevenue = toursInRange.reduce((sum, t) => sum + (t.deposit_amount || t.final_price || 0), 0);
 
     // === TOTALS ===
-    const totalRevenue = transfersTotal + toursTotal;
-    const thisMonthRevenue = transfersMonthRevenue + toursMonthRevenue;
-    const last7DaysRevenue = transfers7DaysRevenue + tours7DaysRevenue;
+    const totalRevenue = transfersRevenue + toursRevenue;
 
-    // Card vs Cash breakdown (only for transfers)
-    const cardPayments = paidTransfers.filter(b => b.payment_status === 'paid');
-    const cashPayments = paidTransfers.filter(b => b.payment_status === 'cash_collected');
-    
-    const cardRevenue = cardPayments.reduce((sum, b) => 
-      sum + (b.payment_amount || 0), 0
-    );
-    const cashRevenue = cashPayments.reduce((sum, b) => 
-      sum + (b.payment_amount || 0), 0
-    );
+    // Payment methods (InRange)
+    const cardRevenue = transfersInRange.filter(b => b.payment_status === 'paid').reduce((sum, b) => sum + (b.payment_amount || 0), 0);
+    const cashRevenue = transfersInRange.filter(b => b.payment_status === 'cash_collected').reduce((sum, b) => sum + (b.payment_amount || 0), 0);
 
-    // Daily revenue for last 7 days (for chart) - combined
+    // Daily revenue for the selected range (for chart)
     const dailyRevenue: { day: string; transfers: number; tours: number; total: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const date = subDays(now, i);
-      const dayStart = startOfDay(date);
-      const dayEnd = new Date(dayStart);
-      dayEnd.setHours(23, 59, 59, 999);
+    
+    if (range) {
+      const days = eachDayOfInterval(range);
+      // If range is large, show fewer points or format differently. For now, daily.
+      const displayDays = days.length > 31 ? days.filter((_, i) => i % Math.ceil(days.length / 15) === 0) : days;
 
-      const dayTransfers = paidTransfers.filter(b => {
-        try {
-          const paidDate = b.paid_at ? parseISO(b.paid_at) : parseISO(b.created_at);
-          return isWithinInterval(paidDate, { start: dayStart, end: dayEnd });
-        } catch {
-          return false;
-        }
-      });
+      displayDays.forEach(date => {
+        const dayStart = startOfDay(date);
+        const dayEnd = endOfDay(date);
 
-      const dayTours = paidTours.filter(t => {
-        try {
-          const paidDate = t.paid_at ? parseISO(t.paid_at) : parseISO(t.created_at);
-          return isWithinInterval(paidDate, { start: dayStart, end: dayEnd });
-        } catch {
-          return false;
-        }
-      });
+        const dayTransfers = transfersInRange.filter(b => {
+          const d = parseISO(b.paid_at || b.created_at);
+          return isWithinInterval(d, { start: dayStart, end: dayEnd });
+        });
 
-      const transfersRev = dayTransfers.reduce((sum, b) => sum + (b.payment_amount || 0), 0);
-      const toursRev = dayTours.reduce((sum, t) => sum + (t.deposit_amount || t.final_price || 0), 0);
+        const dayTours = toursInRange.filter(t => {
+          const d = parseISO(t.paid_at || t.created_at);
+          return isWithinInterval(d, { start: dayStart, end: dayEnd });
+        });
 
-      dailyRevenue.push({
-        day: format(date, 'EEE', { locale: el }),
-        transfers: transfersRev,
-        tours: toursRev,
-        total: transfersRev + toursRev
+        const tRev = dayTransfers.reduce((sum, b) => sum + (b.payment_amount || 0), 0);
+        const rRev = dayTours.reduce((sum, t) => sum + (t.deposit_amount || t.final_price || 0), 0);
+
+        dailyRevenue.push({
+          day: format(date, days.length > 7 ? 'dd/MM' : 'EEE', { locale: el }),
+          transfers: tRev,
+          tours: rRev,
+          total: tRev + rRev
+        });
       });
     }
 
     return {
-      // Totals
       totalRevenue,
-      thisMonthRevenue,
-      last7DaysRevenue,
-      // Transfers
-      transfersTotal,
-      transfersMonthRevenue,
-      transfers7DaysRevenue,
-      transfersCount: paidTransfers.length,
-      // Tours
-      toursTotal,
-      toursMonthRevenue,
-      tours7DaysRevenue,
-      toursCount: paidTours.length,
-      // Payment methods
+      transfersRevenue,
+      toursRevenue,
+      transfersCount: transfersInRange.length,
+      toursCount: toursInRange.length,
       cardRevenue,
       cashRevenue,
-      // Chart data
       dailyRevenue
     };
-  }, [bookings, tourRequests]);
+  }, [bookings, tourRequests, dateRange]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('el-GR', {
@@ -205,7 +182,7 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
     }).format(amount);
   };
 
-  // SOS Calculations
+  // SOS Calculations (Operational - always based on 'Today' logic)
   const sosData = useMemo(() => {
     const today = format(new Date(), 'yyyy-MM-dd');
     const todayArrivals = bookings.filter(b => b.date === today && b.status === 'confirmed').length;
@@ -219,7 +196,7 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
   return (
     <div className="space-y-8 animate-fade-in">
       {/* SOS MISSION CONTROL - Premium Quick View */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-2 bg-slate-900 rounded-[32px] border border-slate-800 shadow-2xl relative overflow-hidden group/sos">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 p-2 bg-slate-900 rounded-[32px] border border-slate-800 shadow-2xl relative overflow-hidden group/sos">
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-sky-500/5 pointer-events-none" />
         
         <div className="p-4 flex flex-col items-center justify-center text-center relative z-10">
@@ -229,7 +206,7 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
             </div>
             {sosData.todayArrivals > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 border-2 border-slate-900 rounded-full" />}
           </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Αφίξεις Σήμερα</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ΑΦΙΞΕΙΣ ΣΗΜΕΡΑ</p>
           <h4 className="text-2xl font-black text-white">{sosData.todayArrivals}</h4>
         </div>
 
@@ -237,28 +214,86 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
           <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 mb-3">
             <Clock className="w-6 h-6" />
           </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Εκκρεμείς Μεταφορές</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ΕΚΚΡΕΜΕΙΣ ΜΕΤΑΦΟΡΕΣ</p>
           <h4 className="text-2xl font-black text-white">{sosData.pendingTransfers}</h4>
         </div>
 
-        <div className="p-4 flex flex-col items-center justify-center text-center relative z-10 border-l border-slate-800/50">
+        <div className="p-4 flex flex-col items-center justify-center text-center relative z-10 border-t lg:border-t-0 lg:border-l border-slate-800/50">
           <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500 mb-3">
             <Compass className="w-6 h-6" />
           </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Νέα Αιτήματα Εκδρομών</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ΝΕΑ ΑΙΤΗΜΑΤΑ ΕΚΔΡΟΜΩΝ</p>
           <h4 className="text-2xl font-black text-white">{sosData.pendingTours}</h4>
         </div>
 
-        <div className="p-4 flex flex-col items-center justify-center text-center relative z-10 border-l border-slate-800/50">
+        <div className="p-4 flex flex-col items-center justify-center text-center relative z-10 border-t border-l lg:border-t-0 border-slate-800/50">
           <div className="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-500 mb-3">
             <UserCheck className="w-6 h-6" />
           </div>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Χωρίς Οδηγό</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">ΧΩΡΙΣ ΟΔΗΓΟ</p>
           <h4 className="text-2xl font-black text-white">{sosData.unassignedDrivers}</h4>
         </div>
-      </div>      {/* Top Stats Grid */}
+      </div>
+
+      {/* Date Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-6 bg-white p-4 rounded-[28px] border border-slate-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500">
+            <Filter className="w-5 h-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-slate-800 uppercase tracking-tight">ΦΙΛΤΡΟ ΗΜΕΡΟΜΗΝΙΑΣ</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              {dateRange?.from && dateRange?.to 
+                ? `${format(dateRange.from, 'dd MMM', { locale: el })} - ${format(dateRange.to, 'dd MMM yyyy', { locale: el })}`
+                : 'ΕΠΙΛΕΞΤΕ ΠΕΡΙΟΔΟ'}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+           <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setDateRange({ from: subDays(new Date(), 7), to: new Date() })}
+            className="text-[10px] font-black uppercase tracking-widest h-9 rounded-lg hover:bg-slate-50"
+           >
+            7 ΗΜΕΡΕΣ
+           </Button>
+           <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setDateRange({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) })}
+            className="text-[10px] font-black uppercase tracking-widest h-9 rounded-lg hover:bg-slate-50"
+           >
+            ΑΥΤΟΣ Ο ΜΗΝΑΣ
+           </Button>
+           <div className="h-6 w-px bg-slate-100 mx-2" />
+           <Popover>
+            <PopoverTrigger asChild>
+              <Button className="h-10 px-6 rounded-xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-slate-900/10">
+                <CalendarIcon className="w-4 h-4" />
+                ΕΠΙΛΟΓΗ
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 border-none shadow-2xl rounded-3xl overflow-hidden z-[100]" align="end">
+              <Calendar
+                initialFocus
+                mode="range"
+                defaultMonth={dateRange?.from}
+                selected={dateRange}
+                onSelect={setDateRange}
+                numberOfMonths={2}
+                className="p-6 bg-white"
+              />
+            </PopoverContent>
+           </Popover>
+        </div>
+      </div>
+
+      {/* Top Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Revenue */}
+        {/* Total revenue in period */}
         <Card className="p-6 bg-white border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-full -mr-8 -mt-8 group-hover:bg-emerald-500/10 transition-colors" />
           <div className="flex items-center gap-4 mb-4">
@@ -266,53 +301,35 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
               <Euro className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Συνολικά Έσοδα</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">ΕΣΟΔΑ ΠΕΡΙΟΔΟΥ</p>
               <h3 className="text-2xl font-black text-slate-800 tracking-tight">{formatCurrency(stats.totalRevenue)}</h3>
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px] font-bold">
-            <span className="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">+12%</span>
-            <span className="text-slate-400">από τον προηγούμενο μήνα</span>
+            <span className="text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-full">✓</span>
+            <span className="text-slate-400">επιβεβαιωμένα έσοδα</span>
           </div>
         </Card>
 
-        {/* This Month */}
+        {/* Transfers in period */}
         <Card className="p-6 bg-white border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-bl-full -mr-8 -mt-8 group-hover:bg-blue-500/10 transition-colors" />
           <div className="flex items-center gap-4 mb-4">
             <div className="p-3 rounded-2xl bg-blue-500/10 text-blue-600">
-              <TrendingUp className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Αυτό τον Μήνα</p>
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{formatCurrency(stats.thisMonthRevenue)}</h3>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-[10px] font-bold">
-            <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full">{stats.transfersCount + stats.toursCount}</span>
-            <span className="text-slate-400">συνολικές κρατήσεις</span>
-          </div>
-        </Card>
-
-        {/* Transfers */}
-        <Card className="p-6 bg-white border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-full -mr-8 -mt-8 group-hover:bg-indigo-500/10 transition-colors" />
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 rounded-2xl bg-indigo-500/10 text-indigo-600">
               <Car className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Μεταφορές</p>
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{formatCurrency(stats.transfersMonthRevenue)}</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">ΜΕΤΑΦΟΡΕΣ</p>
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{formatCurrency(stats.transfersRevenue)}</h3>
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px] font-bold">
-            <span className="text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-full">{stats.transfersCount}</span>
-            <span className="text-slate-400">ολοκληρωμένα δρομολόγια</span>
+            <span className="text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{stats.transfersCount} Trips</span>
+            <span className="text-slate-400">στην περίοδο</span>
           </div>
         </Card>
 
-        {/* Tours */}
+        {/* Tours in period */}
         <Card className="p-6 bg-white border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
           <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-full -mr-8 -mt-8 group-hover:bg-amber-500/10 transition-colors" />
           <div className="flex items-center gap-4 mb-4">
@@ -320,13 +337,31 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
               <Compass className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Εκδρομές</p>
-              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{formatCurrency(stats.toursMonthRevenue)}</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">ΕΚΔΡΟΜΕΣ</p>
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{formatCurrency(stats.toursRevenue)}</h3>
             </div>
           </div>
           <div className="flex items-center gap-2 text-[10px] font-bold">
-            <span className="text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full">{stats.toursCount}</span>
-            <span className="text-slate-400">ενεργά αιτήματα</span>
+            <span className="text-amber-500 bg-amber-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{stats.toursCount} Tours</span>
+            <span className="text-slate-400">στην περίοδο</span>
+          </div>
+        </Card>
+
+        {/* Conversion/Efficiency (Placeholder Logic) */}
+        <Card className="p-6 bg-white border-slate-100 shadow-sm hover:shadow-md transition-all group overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-bl-full -mr-8 -mt-8 group-hover:bg-purple-500/10 transition-colors" />
+          <div className="flex items-center gap-4 mb-4">
+            <div className="p-3 rounded-2xl bg-purple-500/10 text-purple-600">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">ΜΕΣΗ ΤΙΜΗ</p>
+              <h3 className="text-2xl font-black text-slate-800 tracking-tight">{formatCurrency(stats.totalRevenue > 0 ? stats.totalRevenue / (stats.transfersCount + stats.toursCount || 1) : 0)}</h3>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] font-bold">
+            <span className="text-purple-500 bg-purple-50 px-2 py-0.5 rounded-full">AVG</span>
+            <span className="text-slate-400">ανά επιβεβαιωμένη κράτηση</span>
           </div>
         </Card>
       </div>
@@ -337,10 +372,10 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
           <div className="flex items-center justify-between mb-8 relative z-10">
             <div>
               <h3 className="text-lg font-black text-slate-900 tracking-tight leading-tight uppercase flex items-center gap-2">
-                Ανάπτυξη Εσόδων
+                ΑΝΑΠΤΥΞΗ ΕΣΟΔΩΝ
                 <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </h3>
-              <p className="text-xs font-medium text-slate-400">Ημερήσια έσοδα τελευταίων 7 ημερών</p>
+              <p className="text-xs font-medium text-slate-400">Ανάλυση εσόδων για την επιλεγμένη περίοδο</p>
             </div>
             <div className="flex items-center gap-2">
                <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] font-bold text-slate-600 uppercase">
@@ -386,14 +421,14 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
                   stackId="a"
                   fill="#3b82f6" 
                   radius={[0, 0, 0, 0]}
-                  barSize={40}
+                  barSize={stats.dailyRevenue.length > 15 ? 15 : 40}
                 />
                 <Bar 
                   dataKey="tours" 
                   stackId="a"
                   fill="#f59e0b" 
                   radius={[4, 4, 0, 0]}
-                  barSize={40}
+                  barSize={stats.dailyRevenue.length > 15 ? 15 : 40}
                 />
               </BarChart>
             </ResponsiveContainer>
@@ -404,7 +439,7 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
         <div className="space-y-8">
           <Card className="p-8 bg-white border-slate-100 shadow-sm">
             <h3 className="text-sm font-black text-slate-900 tracking-tight leading-tight uppercase mb-6 flex items-center gap-2">
-              Τρόποι Πληρωμής
+              ΤΡΟΠΟΙ ΠΛΗΡΩΜΗΣ
               <div className="h-1 w-4 rounded-full bg-emerald-500/20" />
             </h3>
             <div className="space-y-4">
@@ -414,7 +449,7 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
                     <Banknote className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Μετρητά</p>
+                    <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">ΜΕΤΡΗΤΑ</p>
                     <p className="text-lg font-black text-emerald-900 leading-none">{formatCurrency(stats.cashRevenue)}</p>
                   </div>
                 </div>
@@ -427,13 +462,16 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
                     <CreditCard className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">Κάρτα</p>
+                    <p className="text-[10px] font-black text-purple-600 uppercase tracking-widest">ΚΑΡΤΑ</p>
                     <p className="text-lg font-black text-purple-900 leading-none">{formatCurrency(stats.cardRevenue)}</p>
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-purple-400 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
+            <p className="mt-6 text-[9px] font-bold text-slate-400 uppercase tracking-widest text-center">
+              ΑΝΑΛΥΣΗ ΜΕΤΑΦΟΡΩΝ ΓΙΑ ΤΗΝ ΠΕΡΙΟΔΟ
+            </p>
           </Card>
 
           <Card className="p-8 bg-slate-900 text-white border-none shadow-xl shadow-slate-200 shadow-md transform hover:-translate-y-1 transition-all duration-300 relative overflow-hidden">
@@ -441,26 +479,26 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-full -mr-16 -mt-16 blur-2xl" />
             
             <h3 className="text-xs font-black text-slate-400 tracking-tight leading-tight uppercase mb-6 flex items-center gap-2 relative z-10">
-              Πλατφόρμες
+              ΠΛΑΤΦΟΡΜΕΣ
               <div className="h-1 w-4 rounded-full bg-emerald-400" />
             </h3>
             <div className="space-y-6 relative z-10">
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">LIV Website</span>
-                  <span className="text-xs font-black text-emerald-400">85%</span>
+                  <span className="text-xs font-black text-emerald-400">92%</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full w-[85%] bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
+                  <div className="h-full w-[92%] bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Manual</span>
-                  <span className="text-xs font-black text-sky-400">15%</span>
+                  <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">Direct</span>
+                  <span className="text-xs font-black text-sky-400">8%</span>
                 </div>
                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full w-[15%] bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
+                  <div className="h-full w-[8%] bg-sky-400 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.5)]" />
                 </div>
               </div>
             </div>
@@ -469,5 +507,4 @@ export const RevenueStats = ({ bookings, tourRequests = [] }: RevenueStatsProps)
       </div>
     </div>
   );
-
 };

@@ -19,14 +19,14 @@ import heroImage from "@/assets/fleet-minivan-real.webp";
 import fleetSedan from "@/assets/fleet-sedan-new.webp";
 import fleetMinivan from "@/assets/fleet-vclass-exterior.webp";
 import fleetMinibus from "@/assets/minibusmaxi4.jpg";
-import toursHero from "@/assets/tours-hero.jpg";
+// import toursHero from "@/assets/tours-hero.jpg";
 
 // Destination images for route cards
 import chaniaImg from "@/assets/tours/chania-old-town-cover.webp";
 import rethymnoImg from "@/assets/tours/rethymno-cover.webp";
 import kournasImg from "@/assets/tours/lake-kournas-cover.webp";
-import elafonisiImg from "@/assets/tours/elafonisi-pink-sand.png";
-import balosImg from "@/assets/tours/balos-lagoon-cover.png";
+import elafonisiImg from "@/assets/tours/elafonisi-1.webp";
+import balosImg from "@/assets/tours/balos-gramvousa-cover.webp";
 import spinalongaImg from "@/assets/tours/spinalonga-cover.webp";
 import mirabelloImg from "@/assets/tours/mirabello-sailing-cover.webp";
 import knossosImg from "@/assets/tours/knossos-cover.webp";

@@ -16,7 +16,7 @@ export const useAdminAuth = () => {
       
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        navigate('/admin/auth');
+        navigate('/livy-hq/auth');
         return;
       }
 
@@ -47,7 +47,7 @@ export const useAdminAuth = () => {
     // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
-        navigate('/admin/auth');
+        navigate('/livy-hq/auth');
       }
     });
 
@@ -58,7 +58,7 @@ export const useAdminAuth = () => {
 
   const logout = async () => {
     await supabase.auth.signOut();
-    navigate('/admin/auth');
+    navigate('/livy-hq/auth');
   };
 
   return { isAdmin, isLoading, logout };

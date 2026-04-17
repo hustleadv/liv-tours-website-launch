@@ -43,7 +43,7 @@ import toursHero from "@/assets/tours-hero-new.jpg";
 import fleetSedan from "@/assets/fleet-sedan-new.webp";
 import fleetMinivan from "@/assets/fleet-vclass-exterior.webp";
 import fleetMinibus from "@/assets/minibusmaxi4.jpg";
-import elafonisiImg from "@/assets/tours/elafonisi-pink-sand.png";
+import elafonisiImg from "@/assets/tours/elafonisi-1.webp";
 
 const Tours = () => {
   const { t } = useLanguage();

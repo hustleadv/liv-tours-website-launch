@@ -164,6 +164,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/30 hover:text-accent hover:border-accent/30 transition-all"
+                    aria-label={social.name}
                   >
                     {social.icon}
                   </a>
